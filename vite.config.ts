@@ -16,7 +16,12 @@ export default defineConfig({
   preview: {
     port: 8080,
     host: true,
-    allowedHosts: ['healthcheck.railway.app', 'localhost', '0.0.0.0']
+    allowedHosts: [
+      'healthcheck.railway.app', 
+      'localhost', 
+      '0.0.0.0',
+      'finzenai-frontend-production.up.railway.app'
+    ]
   },
   build: {
     outDir: 'dist',
