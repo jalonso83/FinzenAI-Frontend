@@ -223,8 +223,8 @@ const Register = () => {
                   {errors.country && <div className="text-xs text-error mt-1">{errors.country}</div>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-text mb-1">Estado *</label>
-                  <input name="state" type="text" value={form.state} onChange={handleChange} placeholder="Tu estado" className={`w-full px-4 py-3 border border-border rounded-lg text-base bg-white focus:outline-none focus:ring-2 focus:ring-primary transition ${errors.state ? 'border-error' : ''}`} />
+                  <label className="block text-sm font-medium text-text mb-1">Estado / Provincia *</label>
+                  <input name="state" type="text" value={form.state} onChange={handleChange} placeholder="Tu estado o provincia" className={`w-full px-4 py-3 border border-border rounded-lg text-base bg-white focus:outline-none focus:ring-2 focus:ring-primary transition ${errors.state ? 'border-error' : ''}`} />
                   {errors.state && <div className="text-xs text-error mt-1">{errors.state}</div>}
                 </div>
               </div>
