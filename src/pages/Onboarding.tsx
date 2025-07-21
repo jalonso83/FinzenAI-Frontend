@@ -21,7 +21,12 @@ const Onboarding = () => {
       lowerMsg.includes('todo listo') ||
       lowerMsg.includes('ya puedes empezar') ||
       lowerMsg.includes('estás listo para usar') ||
-      lowerMsg.includes('onboarding finalizado')
+      lowerMsg.includes('onboarding finalizado') ||
+      lowerMsg.includes('tu perfil ha sido registrado') ||
+      lowerMsg.includes('ya tengo todo lo que necesito') ||
+      lowerMsg.includes('perfil registrado') ||
+      lowerMsg.includes('camino hacia una mejor planificación') ||
+      lowerMsg.includes('acompañarte en tu camino')
     )) {
       setOnboardingFinished(true);
       if (user) {
