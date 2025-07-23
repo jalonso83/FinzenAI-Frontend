@@ -45,13 +45,16 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
   const detectIntentAndAddCategories = (message: string): string => {
     const lowerMessage = message.toLowerCase();
     
+    // SIEMPRE incluir categorías para cualquier mensaje
+    const allCategories = categories.map(cat => `${cat.icon} ${cat.name}`);
+    const expenseCategories = categories.filter(cat => cat.type === 'EXPENSE').map(cat => `${cat.icon} ${cat.name}`);
+    const incomeCategories = categories.filter(cat => cat.type === 'INCOME').map(cat => `${cat.icon} ${cat.name}`);
+    
     // Detectar intención de crear/editar transacciones
     if (lowerMessage.includes('transacción') || lowerMessage.includes('transaccion') || 
         lowerMessage.includes('gasto') || lowerMessage.includes('ingreso') ||
         lowerMessage.includes('pagar') || lowerMessage.includes('comprar') ||
         lowerMessage.includes('registrar') || lowerMessage.includes('agregar')) {      
-      const expenseCategories = categories.filter(cat => cat.type === 'EXPENSE').map(cat => `${cat.icon} ${cat.name}`);
-      const incomeCategories = categories.filter(cat => cat.type === 'INCOME').map(cat => `${cat.icon} ${cat.name}`);
       
       return `${message}\n\nCategorías disponibles:\nGastos: ${expenseCategories.join(', ')}\nIngresos: ${incomeCategories.join(', ')}`;
     }
@@ -59,7 +62,7 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
     // Detectar intención de crear/editar presupuestos
     if (lowerMessage.includes('presupuesto') || lowerMessage.includes('budget') ||
         lowerMessage.includes('limitar') || lowerMessage.includes('controlar gastos')) {      
-      const expenseCategories = categories.filter(cat => cat.type === 'EXPENSE').map(cat => `${cat.icon} ${cat.name}`);
+      
       return `${message}\n\nCategorías disponibles para presupuestos:\n${expenseCategories.join(', ')}`;
     }
     
@@ -67,13 +70,15 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
     if (lowerMessage.includes('meta') || lowerMessage.includes('ahorro') ||
         lowerMessage.includes('objetivo') || lowerMessage.includes('guardar') ||
         lowerMessage.includes('junta') || lowerMessage.includes('acumular') ||
-        lowerMessage.includes('categoría') || lowerMessage.includes('categoria')) {      
-      const allCategories = categories.map(cat => `${cat.icon} ${cat.name}`);
+        lowerMessage.includes('categoría') || lowerMessage.includes('categoria') ||
+        lowerMessage.includes('categorias') || lowerMessage.includes('cuales') ||
+        lowerMessage.includes('cuáles') || lowerMessage.includes('dudas')) {      
+      
       return `${message}\n\nCategorías disponibles para metas:\n${allCategories.join(', ')}`;
     }
     
-    // Si no detecta intención específica, devolver mensaje original
-    return message;
+    // SIEMPRE incluir categorías para cualquier otro mensaje
+    return `${message}\n\nCategorías disponibles en el sistema:\n${allCategories.join(', ')}`;
   };
 
   useEffect(() => {
@@ -100,7 +105,12 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
     setSubmitting(true);
     try {
       // Preparar payload con contexto oculto de categorías
-      let payload: any = { message: detectIntentAndAddCategories(message) };
+      const processedMessage = detectIntentAndAddCategories(message);
+      console.log('[Zenio Debug] Mensaje original:', message);
+      console.log('[Zenio Debug] Mensaje procesado:', processedMessage);
+      console.log('[Zenio Debug] Categorías disponibles:', categories.length);
+      
+      let payload: any = { message: processedMessage };
       if (threadId) payload.threadId = threadId;
       // Agregar categorías disponibles como contexto oculto con información completa
       payload.categories = categories.map(cat => ({
