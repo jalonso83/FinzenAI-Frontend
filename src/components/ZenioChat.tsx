@@ -38,17 +38,36 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
 
   // Cargar categorías al montar el componente
   useEffect(() => {
+    console.log('[Zenio Debug] Cargando categorías...');
     fetchCategories();
   }, [fetchCategories]);
 
+  // Log cuando las categorías cambian
+  useEffect(() => {
+    console.log('[Zenio Debug] Categorías actualizadas:', categories);
+    console.log('[Zenio Debug] Número de categorías:', categories.length);
+    if (categories.length > 0) {
+      console.log('[Zenio Debug] Primera categoría:', categories[0]);
+    }
+  }, [categories]);
+
   // Función para detectar si el mensaje indica intención de crear/editar algo
   const detectIntentAndAddCategories = (message: string): string => {
+    console.log('[Zenio Debug] detectIntentAndAddCategories llamado con:', message);
+    console.log('[Zenio Debug] Categorías en la función:', categories);
+    console.log('[Zenio Debug] Número de categorías:', categories.length);
+    
     const lowerMessage = message.toLowerCase();
+    console.log('[Zenio Debug] Mensaje en minúsculas:', lowerMessage);
     
     // SIEMPRE incluir categorías para cualquier mensaje
     const allCategories = categories.map(cat => `${cat.icon} ${cat.name}`);
     const expenseCategories = categories.filter(cat => cat.type === 'EXPENSE').map(cat => `${cat.icon} ${cat.name}`);
     const incomeCategories = categories.filter(cat => cat.type === 'INCOME').map(cat => `${cat.icon} ${cat.name}`);
+    
+    console.log('[Zenio Debug] Todas las categorías:', allCategories);
+    console.log('[Zenio Debug] Categorías de gastos:', expenseCategories);
+    console.log('[Zenio Debug] Categorías de ingresos:', incomeCategories);
     
     // Detectar intención de crear/editar transacciones
     if (lowerMessage.includes('transacción') || lowerMessage.includes('transaccion') || 
@@ -56,14 +75,18 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         lowerMessage.includes('pagar') || lowerMessage.includes('comprar') ||
         lowerMessage.includes('registrar') || lowerMessage.includes('agregar')) {      
       
-      return `${message}\n\nCategorías disponibles:\nGastos: ${expenseCategories.join(', ')}\nIngresos: ${incomeCategories.join(', ')}`;
+      const result = `${message}\n\nCategorías disponibles:\nGastos: ${expenseCategories.join(', ')}\nIngresos: ${incomeCategories.join(', ')}`;
+      console.log('[Zenio Debug] Resultado para transacciones:', result);
+      return result;
     }
     
     // Detectar intención de crear/editar presupuestos
     if (lowerMessage.includes('presupuesto') || lowerMessage.includes('budget') ||
         lowerMessage.includes('limitar') || lowerMessage.includes('controlar gastos')) {      
       
-      return `${message}\n\nCategorías disponibles para presupuestos:\n${expenseCategories.join(', ')}`;
+      const result = `${message}\n\nCategorías disponibles para presupuestos:\n${expenseCategories.join(', ')}`;
+      console.log('[Zenio Debug] Resultado para presupuestos:', result);
+      return result;
     }
     
     // Detectar intención de crear/editar metas
@@ -74,11 +97,15 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         lowerMessage.includes('categorias') || lowerMessage.includes('cuales') ||
         lowerMessage.includes('cuáles') || lowerMessage.includes('dudas')) {      
       
-      return `${message}\n\nCategorías disponibles para metas:\n${allCategories.join(', ')}`;
+      const result = `${message}\n\nCategorías disponibles para metas:\n${allCategories.join(', ')}`;
+      console.log('[Zenio Debug] Resultado para metas:', result);
+      return result;
     }
     
     // SIEMPRE incluir categorías para cualquier otro mensaje
-    return `${message}\n\nCategorías disponibles en el sistema:\n${allCategories.join(', ')}`;
+    const result = `${message}\n\nCategorías disponibles en el sistema:\n${allCategories.join(', ')}`;
+    console.log('[Zenio Debug] Resultado por defecto:', result);
+    return result;
   };
 
   useEffect(() => {
@@ -118,6 +145,10 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         type: cat.type,
         icon: cat.icon
       }));
+      
+      console.log('[Zenio Debug] Payload completo:', payload);
+      console.log('[Zenio Debug] URL de la API:', '/zenio/chat');
+      
       // Siempre enviar a /zenio/chat, nunca concatenar threadId a la URL
       const res = await api.post('/zenio/chat', payload);
       const { message: backendMessage, threadId: backendThreadId, transaction, budget, goal, action } = res.data;
