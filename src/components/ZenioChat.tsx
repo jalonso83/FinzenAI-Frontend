@@ -51,63 +51,6 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
     }
   }, [categories]);
 
-  // Función para detectar si el mensaje indica intención de crear/editar algo
-  const detectIntentAndAddCategories = (message: string): string => {
-    console.log('[Zenio Debug] detectIntentAndAddCategories llamado con:', message);
-    console.log('[Zenio Debug] Categorías en la función:', categories);
-    console.log('[Zenio Debug] Número de categorías:', categories.length);
-    
-    const lowerMessage = message.toLowerCase();
-    console.log('[Zenio Debug] Mensaje en minúsculas:', lowerMessage);
-    
-    // SIEMPRE incluir categorías para cualquier mensaje
-    const allCategories = categories.map(cat => `${cat.icon} ${cat.name}`);
-    const expenseCategories = categories.filter(cat => cat.type === 'EXPENSE').map(cat => `${cat.icon} ${cat.name}`);
-    const incomeCategories = categories.filter(cat => cat.type === 'INCOME').map(cat => `${cat.icon} ${cat.name}`);
-    
-    console.log('[Zenio Debug] Todas las categorías:', allCategories);
-    console.log('[Zenio Debug] Categorías de gastos:', expenseCategories);
-    console.log('[Zenio Debug] Categorías de ingresos:', incomeCategories);
-    
-    // Detectar intención de crear/editar transacciones
-    if (lowerMessage.includes('transacción') || lowerMessage.includes('transaccion') || 
-        lowerMessage.includes('gasto') || lowerMessage.includes('ingreso') ||
-        lowerMessage.includes('pagar') || lowerMessage.includes('comprar') ||
-        lowerMessage.includes('registrar') || lowerMessage.includes('agregar')) {      
-      
-      const result = `${message}\n\nCategorías disponibles:\nGastos: ${expenseCategories.join(', ')}\nIngresos: ${incomeCategories.join(', ')}`;
-      console.log('[Zenio Debug] Resultado para transacciones:', result);
-      return result;
-    }
-    
-    // Detectar intención de crear/editar presupuestos
-    if (lowerMessage.includes('presupuesto') || lowerMessage.includes('budget') ||
-        lowerMessage.includes('limitar') || lowerMessage.includes('controlar gastos')) {      
-      
-      const result = `${message}\n\nCategorías disponibles para presupuestos:\n${expenseCategories.join(', ')}`;
-      console.log('[Zenio Debug] Resultado para presupuestos:', result);
-      return result;
-    }
-    
-    // Detectar intención de crear/editar metas
-    if (lowerMessage.includes('meta') || lowerMessage.includes('ahorro') ||
-        lowerMessage.includes('objetivo') || lowerMessage.includes('guardar') ||
-        lowerMessage.includes('junta') || lowerMessage.includes('acumular') ||
-        lowerMessage.includes('categoría') || lowerMessage.includes('categoria') ||
-        lowerMessage.includes('categorias') || lowerMessage.includes('cuales') ||
-        lowerMessage.includes('cuáles') || lowerMessage.includes('dudas')) {      
-      
-      const result = `${message}\n\nCategorías disponibles para metas:\n${allCategories.join(', ')}`;
-      console.log('[Zenio Debug] Resultado para metas:', result);
-      return result;
-    }
-    
-    // SIEMPRE incluir categorías para cualquier otro mensaje
-    const result = `${message}\n\nCategorías disponibles en el sistema:\n${allCategories.join(', ')}`;
-    console.log('[Zenio Debug] Resultado por defecto:', result);
-    return result;
-  };
-
   useEffect(() => {
     if (chatRef.current) {
       chatRef.current.scrollTop = chatRef.current.scrollHeight;
@@ -127,19 +70,18 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
     }
   }, [messages]);
 
-  // En onboarding, el primer mensaje enviado es el de onboarding
   const sendToZenio = async (message: string) => {
+    if (!message.trim()) return;
+
     setSubmitting(true);
     try {
-      // Preparar payload con contexto oculto de categorías
-      const processedMessage = detectIntentAndAddCategories(message);
       console.log('[Zenio Debug] Mensaje original:', message);
-      console.log('[Zenio Debug] Mensaje procesado:', processedMessage);
       console.log('[Zenio Debug] Categorías disponibles:', categories.length);
       
-      let payload: any = { message: processedMessage };
+      let payload: any = { message: message };
       if (threadId) payload.threadId = threadId;
-      // Agregar categorías disponibles como contexto oculto con información completa
+      
+      // Enviar categorías en el payload (no en el mensaje)
       payload.categories = categories.map(cat => ({
         name: cat.name,
         type: cat.type,
@@ -148,57 +90,22 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
       
       console.log('[Zenio Debug] Payload completo:', payload);
       console.log('[Zenio Debug] URL de la API:', '/zenio/chat');
+
+      const response = await api.post('/zenio/chat', payload);
       
-      // Siempre enviar a /zenio/chat, nunca concatenar threadId a la URL
-      const res = await api.post('/zenio/chat', payload);
-      const { message: backendMessage, threadId: backendThreadId, transaction, budget, goal, action } = res.data;
-      
-      if (backendThreadId) setThreadId(backendThreadId);
-      
-      // Detectar si se creó, actualizó o eliminó una transacción
-      if (action === 'transaction_created' && transaction && onTransactionCreated) {
-        onTransactionCreated(transaction);
-        // También actualizar presupuestos ya que las transacciones pueden afectarlos
-        window.dispatchEvent(new Event('budgets-updated'));
-      }
-      if (action === 'transaction_updated' && transaction && onTransactionUpdated) {
-        onTransactionUpdated(transaction);
-        // También actualizar presupuestos ya que las transacciones pueden afectarlos
-        window.dispatchEvent(new Event('budgets-updated'));
-      }
-      if (action === 'transaction_deleted' && transaction && onTransactionDeleted) {
-        onTransactionDeleted(transaction);
-        // También actualizar presupuestos ya que las transacciones pueden afectarlos
-        window.dispatchEvent(new Event('budgets-updated'));
-      }
-      // Detectar si se creó, actualizó o eliminó un presupuesto
-      if (action === 'budget_created' || action === 'budget_updated' || action === 'budget_deleted') {
-        window.dispatchEvent(new Event('budgets-updated'));
-      }
-      
-      // Detectar si se creó, actualizó o eliminó una meta
-      if (action === 'goal_created' && goal && onGoalCreated) {
-        onGoalCreated(goal);
-        window.dispatchEvent(new Event('goals-updated'));
-      }
-      if (action === 'goal_updated' && goal && onGoalUpdated) {
-        onGoalUpdated(goal);
-        window.dispatchEvent(new Event('goals-updated'));
-      }
-      if (action === 'goal_deleted' && goal && onGoalDeleted) {
-        onGoalDeleted(goal);
-        window.dispatchEvent(new Event('goals-updated'));
-      }
-      
-      if (backendMessage) {
-        setMessages((msgs: any[]) => [
-          ...msgs,
-          { from: 'zenio', text: typeof backendMessage === 'string' ? backendMessage : JSON.stringify(backendMessage, null, 2) }
-        ]);
-        if (onZenioMessage && typeof backendMessage === 'string') {
-          onZenioMessage(backendMessage);
+      if (response.data.message) {
+        setMessages(prev => [...prev, { from: 'zenio', text: response.data.message }]);
+        
+        // Notificar al componente padre si es onboarding
+        if (isOnboarding && onZenioMessage) {
+          onZenioMessage(response.data.message);
         }
       }
+      
+      if (response.data.threadId && !threadId) {
+        setThreadId(response.data.threadId);
+      }
+      
     } catch (error: any) {
       // Manejo especial para run activo
       if (error.response?.status === 429 && error.response.data?.message) {
