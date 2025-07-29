@@ -47,7 +47,13 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
     console.log('[Zenio Debug] Categorías actualizadas:', categories);
     console.log('[Zenio Debug] Número de categorías:', categories.length);
     if (categories.length > 0) {
-      console.log('[Zenio Debug] Primera categoría:', categories[0]);
+      // Mostrar solo los campos que se envían al backend
+      const primeraCategoriaEnviada = {
+        id: categories[0].id,
+        name: categories[0].name,
+        type: categories[0].type
+      };
+      console.log('[Zenio Debug] Primera categoría (enviada):', primeraCategoriaEnviada);
     }
   }, [categories]);
 
