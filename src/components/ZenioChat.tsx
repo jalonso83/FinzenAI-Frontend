@@ -11,13 +11,16 @@ interface ZenioChatProps {
   onTransactionCreated?: (transaction: any) => void;
   onTransactionUpdated?: (transaction: any) => void;
   onTransactionDeleted?: (transaction: any) => void;
+  onBudgetCreated?: (budget: any) => void;
+  onBudgetUpdated?: (budget: any) => void;
+  onBudgetDeleted?: (budget: any) => void;
   onGoalCreated?: (goal: any) => void;
   onGoalUpdated?: (goal: any) => void;
   onGoalDeleted?: (goal: any) => void;
   onZenioMessage?: (msg: string) => void;
 }
 
-const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, initialMessage, onTransactionCreated, onTransactionUpdated, onTransactionDeleted, onGoalCreated, onGoalUpdated, onGoalDeleted, onZenioMessage }) => {
+const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, initialMessage, onTransactionCreated, onTransactionUpdated, onTransactionDeleted, onBudgetCreated, onBudgetUpdated, onBudgetDeleted, onGoalCreated, onGoalUpdated, onGoalDeleted, onZenioMessage }) => {
   // Si es onboarding, inicia con saludo. Si no, inicia vacío.
   const [messages, setMessages] = useState<any[]>(
     isOnboarding
@@ -105,6 +108,59 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         // Notificar al componente padre si es onboarding
         if (isOnboarding && onZenioMessage) {
           onZenioMessage(response.data.message);
+        }
+      }
+      
+      // Verificar si hay acciones que ejecutar
+      if (response.data.action) {
+        console.log('[Zenio Debug] Acción detectada:', response.data.action);
+        
+        switch (response.data.action) {
+          case 'transaction_created':
+            if (onTransactionCreated && response.data.transaction) {
+              onTransactionCreated(response.data.transaction);
+            }
+            break;
+          case 'transaction_updated':
+            if (onTransactionUpdated && response.data.transaction) {
+              onTransactionUpdated(response.data.transaction);
+            }
+            break;
+          case 'transaction_deleted':
+            if (onTransactionDeleted && response.data.transaction) {
+              onTransactionDeleted(response.data.transaction);
+            }
+            break;
+          case 'budget_created':
+            if (onBudgetCreated && response.data.budget) {
+              onBudgetCreated(response.data.budget);
+            }
+            break;
+          case 'budget_updated':
+            if (onBudgetUpdated && response.data.budget) {
+              onBudgetUpdated(response.data.budget);
+            }
+            break;
+          case 'budget_deleted':
+            if (onBudgetDeleted && response.data.budget) {
+              onBudgetDeleted(response.data.budget);
+            }
+            break;
+          case 'goal_created':
+            if (onGoalCreated && response.data.goal) {
+              onGoalCreated(response.data.goal);
+            }
+            break;
+          case 'goal_updated':
+            if (onGoalUpdated && response.data.goal) {
+              onGoalUpdated(response.data.goal);
+            }
+            break;
+          case 'goal_deleted':
+            if (onGoalDeleted && response.data.goal) {
+              onGoalDeleted(response.data.goal);
+            }
+            break;
         }
       }
       
