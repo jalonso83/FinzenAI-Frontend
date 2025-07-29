@@ -81,11 +81,11 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
       let payload: any = { message: message };
       if (threadId) payload.threadId = threadId;
       
-      // Enviar categorías en el payload (no en el mensaje)
+      // Enviar categorías en el payload (solo id, name, type)
       payload.categories = categories.map(cat => ({
+        id: cat.id,
         name: cat.name,
-        type: cat.type,
-        icon: cat.icon
+        type: cat.type
       }));
       
       console.log('[Zenio Debug] Payload completo:', payload);
