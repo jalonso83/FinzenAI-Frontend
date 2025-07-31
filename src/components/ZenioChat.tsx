@@ -41,24 +41,8 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
 
   // Cargar categorías al montar el componente
   useEffect(() => {
-    console.log('[Zenio Debug] Cargando categorías...');
     fetchCategories();
   }, [fetchCategories]);
-
-  // Log cuando las categorías cambian
-  useEffect(() => {
-    console.log('[Zenio Debug] Categorías actualizadas:', categories);
-    console.log('[Zenio Debug] Número de categorías:', categories.length);
-    if (categories.length > 0) {
-      // Mostrar solo los campos que se envían al backend
-      const primeraCategoriaEnviada = {
-        id: categories[0].id,
-        name: categories[0].name,
-        type: categories[0].type
-      };
-      console.log('[Zenio Debug] Primera categoría (enviada):', primeraCategoriaEnviada);
-    }
-  }, [categories]);
 
   useEffect(() => {
     if (chatRef.current) {
@@ -84,9 +68,6 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
 
     setSubmitting(true);
     try {
-      console.log('[Zenio Debug] Mensaje original:', message);
-      console.log('[Zenio Debug] Categorías disponibles:', categories.length);
-      
       // Obtener zona horaria del usuario
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       
@@ -102,9 +83,6 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
       
       // Enviar zona horaria del usuario
       payload.timezone = userTimezone;
-      
-      console.log('[Zenio Debug] Payload completo:', payload);
-      console.log('[Zenio Debug] URL de la API:', '/zenio/chat');
 
       const response = await api.post('/zenio/chat', payload);
       
@@ -119,50 +97,63 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
       
       // Verificar si hay acciones que ejecutar
       if (response.data.action) {
-        console.log('[Zenio Debug] Acción detectada:', response.data.action);
+        console.log('[ZenioChat] Acción detectada:', response.data.action);
+        console.log('[ZenioChat] Datos de la acción:', response.data);
         
         switch (response.data.action) {
           case 'transaction_created':
+            console.log('[ZenioChat] Procesando transaction_created');
             if (onTransactionCreated && response.data.transaction) {
+              console.log('[ZenioChat] Llamando onTransactionCreated con:', response.data.transaction);
               onTransactionCreated(response.data.transaction);
+            } else {
+              console.log('[ZenioChat] onTransactionCreated no disponible o transaction no encontrada');
             }
             break;
           case 'transaction_updated':
+            console.log('[ZenioChat] Procesando transaction_updated');
             if (onTransactionUpdated && response.data.transaction) {
               onTransactionUpdated(response.data.transaction);
             }
             break;
           case 'transaction_deleted':
+            console.log('[ZenioChat] Procesando transaction_deleted');
             if (onTransactionDeleted && response.data.transaction) {
               onTransactionDeleted(response.data.transaction);
             }
             break;
           case 'budget_created':
+            console.log('[ZenioChat] Procesando budget_created');
             if (onBudgetCreated && response.data.budget) {
               onBudgetCreated(response.data.budget);
             }
             break;
           case 'budget_updated':
+            console.log('[ZenioChat] Procesando budget_updated');
             if (onBudgetUpdated && response.data.budget) {
               onBudgetUpdated(response.data.budget);
             }
             break;
           case 'budget_deleted':
+            console.log('[ZenioChat] Procesando budget_deleted');
             if (onBudgetDeleted && response.data.budget) {
               onBudgetDeleted(response.data.budget);
             }
             break;
           case 'goal_created':
+            console.log('[ZenioChat] Procesando goal_created');
             if (onGoalCreated && response.data.goal) {
               onGoalCreated(response.data.goal);
             }
             break;
           case 'goal_updated':
+            console.log('[ZenioChat] Procesando goal_updated');
             if (onGoalUpdated && response.data.goal) {
               onGoalUpdated(response.data.goal);
             }
             break;
           case 'goal_deleted':
+            console.log('[ZenioChat] Procesando goal_deleted');
             if (onGoalDeleted && response.data.goal) {
               onGoalDeleted(response.data.goal);
             }
