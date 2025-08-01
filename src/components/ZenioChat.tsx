@@ -111,49 +111,41 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
             }
             break;
           case 'transaction_updated':
-            console.log('[ZenioChat] Procesando transaction_updated');
             if (onTransactionUpdated && response.data.transaction) {
               onTransactionUpdated(response.data.transaction);
             }
             break;
           case 'transaction_deleted':
-            console.log('[ZenioChat] Procesando transaction_deleted');
             if (onTransactionDeleted && response.data.transaction) {
               onTransactionDeleted(response.data.transaction);
             }
             break;
           case 'budget_created':
-            console.log('[ZenioChat] Procesando budget_created');
             if (onBudgetCreated && response.data.budget) {
               onBudgetCreated(response.data.budget);
             }
             break;
           case 'budget_updated':
-            console.log('[ZenioChat] Procesando budget_updated');
             if (onBudgetUpdated && response.data.budget) {
               onBudgetUpdated(response.data.budget);
             }
             break;
           case 'budget_deleted':
-            console.log('[ZenioChat] Procesando budget_deleted');
             if (onBudgetDeleted && response.data.budget) {
               onBudgetDeleted(response.data.budget);
             }
             break;
           case 'goal_created':
-            console.log('[ZenioChat] Procesando goal_created');
             if (onGoalCreated && response.data.goal) {
               onGoalCreated(response.data.goal);
             }
             break;
           case 'goal_updated':
-            console.log('[ZenioChat] Procesando goal_updated');
             if (onGoalUpdated && response.data.goal) {
               onGoalUpdated(response.data.goal);
             }
             break;
           case 'goal_deleted':
-            console.log('[ZenioChat] Procesando goal_deleted');
             if (onGoalDeleted && response.data.goal) {
               onGoalDeleted(response.data.goal);
             }
