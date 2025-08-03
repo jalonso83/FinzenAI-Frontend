@@ -42,6 +42,7 @@ interface CategoryReportData {
 const CategoryReport: React.FC = () => {
   const [reportData, setReportData] = useState<CategoryReportData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState('lastMonth');
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [customStartDate, setCustomStartDate] = useState('');
@@ -89,7 +90,9 @@ const CategoryReport: React.FC = () => {
 
   const loadReportData = async () => {
     try {
+      console.log('🔄 Iniciando carga de reporte por categorías...');
       setLoading(true);
+      setError(null);
       const { startDate, endDate } = getDateRange();
       
       const params = new URLSearchParams({
@@ -101,10 +104,14 @@ const CategoryReport: React.FC = () => {
         params.append('categories', selectedCategories.join(','));
       }
 
+      console.log('📡 Haciendo petición a:', `/reports/categories?${params.toString()}`);
       const response = await api.get(`/reports/categories?${params.toString()}`);
+      console.log('✅ Respuesta recibida:', response.data);
       setReportData(response.data);
-    } catch (error) {
-      console.error('Error cargando reporte:', error);
+    } catch (error: any) {
+      console.error('❌ Error cargando reporte:', error);
+      setError(error?.response?.data?.message || error?.message || 'Error al cargar el reporte');
+      setReportData(null);
     } finally {
       setLoading(false);
     }
@@ -155,6 +162,32 @@ const CategoryReport: React.FC = () => {
       <div className="flex items-center justify-center h-64">
         <RefreshCw className="w-8 h-8 animate-spin text-primary" />
         <span className="ml-2 text-gray-600">Cargando reporte...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="flex items-center">
+          <div className="flex-shrink-0">
+            <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-red-800">Error al cargar el reporte</h3>
+            <p className="mt-1 text-sm text-red-700">{error}</p>
+            <div className="mt-4">
+              <button
+                onClick={loadReportData}
+                className="bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded text-sm font-medium"
+              >
+                Intentar de nuevo
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -279,6 +312,20 @@ const CategoryReport: React.FC = () => {
           </div>
         )}
       </div>
+
+      {!reportData && !loading && !error && (
+        <div className="text-center py-12">
+          <div className="text-gray-400 mb-4">
+            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Presiona "Actualizar" para cargar el reporte</h3>
+          <p className="text-gray-500">
+            Una vez cargado, aquí verás un análisis detallado de tus gastos e ingresos organizados por categorías.
+          </p>
+        </div>
+      )}
 
       {reportData && (
         <>
