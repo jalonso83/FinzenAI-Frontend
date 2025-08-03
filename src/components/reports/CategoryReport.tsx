@@ -44,7 +44,7 @@ const CategoryReport: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState('lastMonth');
-  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   
@@ -128,7 +128,7 @@ const CategoryReport: React.FC = () => {
     return `${percent.toFixed(1)}%`;
   };
 
-  const handleCategoryToggle = (categoryId: number) => {
+  const handleCategoryToggle = (categoryId: string) => {
     setSelectedCategories(prev => 
       prev.includes(categoryId) 
         ? prev.filter(id => id !== categoryId)
@@ -237,9 +237,9 @@ const CategoryReport: React.FC = () => {
             <div className="relative">
               <select
                 multiple
-                value={selectedCategories.map(String)}
+                value={selectedCategories}
                 onChange={(e) => {
-                  const values = Array.from(e.target.selectedOptions, option => parseInt(option.value));
+                  const values = Array.from(e.target.selectedOptions, option => option.value);
                   setSelectedCategories(values);
                 }}
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary min-w-40"
