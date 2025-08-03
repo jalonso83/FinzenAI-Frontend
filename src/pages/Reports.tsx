@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuthStore } from '../stores/auth';
 import Navigation from '../components/Navigation';
 import CategoryReport from '../components/reports/CategoryReport';
+import CategoryReportSimple from '../components/reports/CategoryReportSimple';
 import './Screens.css';
 
 const Reports = () => {
@@ -97,7 +98,27 @@ const Reports = () => {
 
               {/* Contenido del reporte seleccionado */}
               <div className="space-y-6">
-                {selectedReport === 'categories' && <CategoryReport />}
+                {selectedReport === 'categories' && (
+                  <div>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                      <p className="text-blue-800">🔧 Modo Debug: Probando componente simple primero...</p>
+                    </div>
+                    <CategoryReportSimple />
+                    
+                    <div className="mt-6">
+                      <details className="bg-gray-50 rounded-lg p-4">
+                        <summary className="cursor-pointer font-medium text-gray-700">
+                          🔍 Cargar componente complejo (click para expandir)
+                        </summary>
+                        <div className="mt-4">
+                          <React.Suspense fallback={<div>Cargando componente complejo...</div>}>
+                            <CategoryReport />
+                          </React.Suspense>
+                        </div>
+                      </details>
+                    </div>
+                  </div>
+                )}
 
                 {selectedReport === 'dates' && (
                   <div className="text-center py-12">
