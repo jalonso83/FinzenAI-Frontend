@@ -90,7 +90,6 @@ const CategoryReport: React.FC = () => {
 
   const loadReportData = async () => {
     try {
-      console.log('🔄 Iniciando carga de reporte por categorías...');
       setLoading(true);
       setError(null);
       const { startDate, endDate } = getDateRange();
@@ -104,12 +103,10 @@ const CategoryReport: React.FC = () => {
         params.append('categories', selectedCategories.join(','));
       }
 
-      console.log('📡 Haciendo petición a:', `/reports/categories?${params.toString()}`);
       const response = await api.get(`/reports/categories?${params.toString()}`);
-      console.log('✅ Respuesta recibida:', response.data);
       setReportData(response.data);
     } catch (error: any) {
-      console.error('❌ Error cargando reporte:', error);
+      console.error('Error cargando reporte:', error);
       setError(error?.response?.data?.message || error?.message || 'Error al cargar el reporte');
       setReportData(null);
     } finally {
