@@ -8,6 +8,7 @@ interface ZenioChatProps {
   onClose?: () => void;
   isOnboarding?: boolean;
   initialMessage?: string;
+  user?: any;
   onTransactionCreated?: (transaction: any) => void;
   onTransactionUpdated?: (transaction: any) => void;
   onTransactionDeleted?: (transaction: any) => void;
@@ -20,7 +21,7 @@ interface ZenioChatProps {
   onZenioMessage?: (msg: string) => void;
 }
 
-const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, initialMessage, onTransactionCreated, onTransactionUpdated, onTransactionDeleted, onBudgetCreated, onBudgetUpdated, onBudgetDeleted, onGoalCreated, onGoalUpdated, onGoalDeleted, onZenioMessage }) => {
+const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, initialMessage, user, onTransactionCreated, onTransactionUpdated, onTransactionDeleted, onBudgetCreated, onBudgetUpdated, onBudgetDeleted, onGoalCreated, onGoalUpdated, onGoalDeleted, onZenioMessage }) => {
   // Si es onboarding, inicia con saludo. Si no, inicia vacío.
   const [messages, setMessages] = useState<any[]>(
     isOnboarding
@@ -43,6 +44,56 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
+
+  // Auto-inicializar conversación para modal (no onboarding)
+  useEffect(() => {
+    const initializeConversation = async () => {
+      if (!isOnboarding && !hasSentFirst && user && categories.length > 0) {
+        const userName = user.name || user.email || 'Usuario';
+        const userMessage = `Hola Zenio, soy ${userName}`;
+        
+        try {
+          setSubmitting(true);
+          const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          
+          const payload = {
+            message: userMessage,
+            categories: categories.map(cat => ({
+              id: cat.id,
+              name: cat.name,
+              type: cat.type
+            })),
+            timezone: userTimezone,
+            autoGreeting: true
+          };
+
+          const response = await api.post('/zenio/chat', payload);
+          
+          if (response.data.message) {
+            // Solo agregar la respuesta de Zenio, NO el mensaje del usuario
+            setMessages([{ from: 'zenio', text: response.data.message }]);
+            
+            if (isOnboarding && onZenioMessage) {
+              onZenioMessage(response.data.message);
+            }
+          }
+
+          if (response.data.threadId) {
+            setThreadId(response.data.threadId);
+          }
+          
+          setHasSentFirst(true);
+        } catch (error) {
+          console.error('Error al inicializar conversación:', error);
+          setMessages([{ from: 'zenio', text: 'Ocurrió un error al inicializar la conversación. Intenta escribir un mensaje.' }]);
+        } finally {
+          setSubmitting(false);
+        }
+      }
+    };
+
+    initializeConversation();
+  }, [user, isOnboarding, hasSentFirst, categories]);
 
   useEffect(() => {
     if (chatRef.current) {
