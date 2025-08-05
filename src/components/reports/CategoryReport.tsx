@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Download, Filter, RefreshCw, Calendar, Tag } from 'lucide-react';
 import api from '../../utils/api';
 import { useCategoriesStore } from '../../stores/categories';
+import CategoryMultiSelect from '../ui/CategoryMultiSelect';
 
 interface CategoryReportData {
   period: {
@@ -43,7 +44,7 @@ const CategoryReport: React.FC = () => {
   const [reportData, setReportData] = useState<CategoryReportData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState('lastMonth');
+  const [dateRange, setDateRange] = useState('currentMonth');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
@@ -54,35 +55,50 @@ const CategoryReport: React.FC = () => {
     fetchCategories();
   }, [fetchCategories]);
 
+  // Auto-cargar datos cuando cambien los filtros o se carguen las categorías (con debounce)
   useEffect(() => {
-    loadReportData();
-  }, [dateRange, selectedCategories]);
+    if (categories.length > 0) {
+      const timeoutId = setTimeout(() => {
+        loadReportData();
+      }, 300); // Debounce de 300ms
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [dateRange, selectedCategories, categories]);
 
   const getDateRange = () => {
     const now = new Date();
     let startDate, endDate;
 
     switch (dateRange) {
+      case 'currentMonth':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+        break;
       case 'lastMonth':
         startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+        break;
+      case 'last3Months':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
         break;
       case 'lastQuarter':
         const quarterStart = Math.floor(now.getMonth() / 3) * 3;
         startDate = new Date(now.getFullYear(), quarterStart - 3, 1);
-        endDate = new Date(now.getFullYear(), quarterStart, 0);
+        endDate = new Date(now.getFullYear(), quarterStart, 0, 23, 59, 59);
         break;
       case 'lastYear':
         startDate = new Date(now.getFullYear() - 1, 0, 1);
-        endDate = new Date(now.getFullYear() - 1, 11, 31);
+        endDate = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59);
         break;
       case 'custom':
-        startDate = customStartDate ? new Date(customStartDate) : new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        endDate = customEndDate ? new Date(customEndDate) : new Date();
+        startDate = customStartDate ? new Date(customStartDate) : new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = customEndDate ? new Date(customEndDate + 'T23:59:59') : new Date();
         break;
       default:
-        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
     }
 
     return { startDate, endDate };
@@ -125,13 +141,6 @@ const CategoryReport: React.FC = () => {
     return `${percent.toFixed(1)}%`;
   };
 
-  const handleCategoryToggle = (categoryId: string) => {
-    setSelectedCategories(prev => 
-      prev.includes(categoryId) 
-        ? prev.filter(id => id !== categoryId)
-        : [...prev, categoryId]
-    );
-  };
 
   const handleExport = async (format: 'pdf' | 'excel') => {
     try {
@@ -203,9 +212,11 @@ const CategoryReport: React.FC = () => {
                 onChange={(e) => setDateRange(e.target.value)}
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option value="lastMonth">Último Mes</option>
+                <option value="currentMonth">Este Mes</option>
+                <option value="lastMonth">Mes Anterior</option>
+                <option value="last3Months">Últimos 3 Meses</option>
                 <option value="lastQuarter">Último Trimestre</option>
-                <option value="lastYear">Último Año</option>
+                <option value="lastYear">Año Anterior</option>
                 <option value="custom">Personalizado</option>
               </select>
             </div>
@@ -231,95 +242,79 @@ const CategoryReport: React.FC = () => {
           {/* Filtro de Categorías */}
           <div className="flex items-center gap-2">
             <Tag className="w-5 h-5 text-gray-500" />
-            <div className="relative">
-              <select
-                multiple
-                value={selectedCategories}
-                onChange={(e) => {
-                  const values = Array.from(e.target.selectedOptions, option => option.value);
-                  setSelectedCategories(values);
-                }}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary min-w-40"
-              >
-                <option value="">Todas las categorías</option>
-                {categories.map(category => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
+            <div className="min-w-64">
+              <CategoryMultiSelect
+                categories={categories}
+                selectedCategories={selectedCategories}
+                onSelectionChange={setSelectedCategories}
+                placeholder="Todas las categorías"
+              />
             </div>
           </div>
 
           {/* Botones de Acción */}
-          <div className="flex gap-2">
-            <button
-              onClick={loadReportData}
-              disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition disabled:opacity-50"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Actualizar
-            </button>
+          <div className="flex gap-2 items-center">
+            {loading && (
+              <div className="flex items-center gap-2 text-primary">
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span className="text-sm">Actualizando...</span>
+              </div>
+            )}
             
             <div className="relative group">
-              <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+              <button 
+                disabled={loading || !reportData}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <Download className="w-4 h-4" />
                 Exportar
               </button>
-              <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-                <button
-                  onClick={() => handleExport('pdf')}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg"
-                >
-                  Exportar PDF
-                </button>
-                <button
-                  onClick={() => handleExport('excel')}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg"
-                >
-                  Exportar Excel
-                </button>
-              </div>
+              {!loading && reportData && (
+                <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                  <button
+                    onClick={() => handleExport('pdf')}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg"
+                  >
+                    Exportar PDF
+                  </button>
+                  <button
+                    onClick={() => handleExport('excel')}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg"
+                  >
+                    Exportar Excel
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Filtros Activos */}
-        {selectedCategories.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            <span className="text-sm text-gray-600">Categorías seleccionadas:</span>
-            {selectedCategories.map(categoryId => {
-              const category = categories.find(c => c.id === categoryId);
-              return category ? (
-                <span
-                  key={categoryId}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs"
-                >
-                  {category.name}
-                  <button
-                    onClick={() => handleCategoryToggle(categoryId)}
-                    className="hover:bg-primary/20 rounded-full p-0.5"
-                  >
-                    ×
-                  </button>
-                </span>
-              ) : null;
-            })}
-          </div>
-        )}
       </div>
 
-      {!reportData && !loading && !error && (
+      {!reportData && !loading && !error && categories.length === 0 && (
         <div className="text-center py-12">
           <div className="text-gray-400 mb-4">
             <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Presiona "Actualizar" para cargar el reporte</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Cargando categorías...</h3>
           <p className="text-gray-500">
-            Una vez cargado, aquí verás un análisis detallado de tus gastos e ingresos organizados por categorías.
+            Preparando el análisis de tus gastos e ingresos organizados por categorías.
+          </p>
+        </div>
+      )}
+
+      {!reportData && !loading && !error && categories.length > 0 && (
+        <div className="text-center py-12">
+          <div className="text-gray-400 mb-4">
+            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No hay transacciones en este período</h3>
+          <p className="text-gray-500">
+            Ajusta los filtros de fecha o categorías para ver datos diferentes.
           </p>
         </div>
       )}
