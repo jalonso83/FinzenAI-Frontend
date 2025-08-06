@@ -247,7 +247,7 @@ const CategoryReport: React.FC = () => {
           {/* Filtro de Categorías */}
           <div className="flex items-center gap-2 flex-1 lg:flex-initial">
             <Tag className="w-5 h-5 text-gray-500" />
-            <div className="min-w-80 w-full lg:w-80">
+            <div className="min-w-96 w-full lg:w-96">
               <CategoryMultiSelect
                 categories={categories}
                 selectedCategories={selectedCategories}
