@@ -3,6 +3,8 @@ import { Download, Filter, RefreshCw, Calendar, Tag } from 'lucide-react';
 import api from '../../utils/api';
 import { useCategoriesStore } from '../../stores/categories';
 import CategoryMultiSelect from '../ui/CategoryMultiSelect';
+import PieChart from '../charts/PieChart';
+import LineChart from '../charts/LineChart';
 
 interface CategoryReportData {
   period: {
@@ -415,26 +417,16 @@ const CategoryReport: React.FC = () => {
             </div>
           )}
 
-          {/* Gráficos Placeholder */}
+          {/* Gráficos */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribución por Categorías</h3>
-              <div className="h-64 flex items-center justify-center text-gray-500">
-                <div className="text-center">
-                  <div className="text-4xl mb-2">📊</div>
-                  <p>Gráfico de pastel próximamente</p>
-                </div>
-              </div>
+              <PieChart data={reportData.categoryData} />
             </div>
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Tendencias Mensuales</h3>
-              <div className="h-64 flex items-center justify-center text-gray-500">
-                <div className="text-center">
-                  <div className="text-4xl mb-2">📈</div>
-                  <p>Gráfico de líneas próximamente</p>
-                </div>
-              </div>
+              <LineChart data={reportData.chartData} />
             </div>
           </div>
 
