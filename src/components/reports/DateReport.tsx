@@ -86,8 +86,8 @@ const DateReport: React.FC = () => {
         endDate = new Date();
         break;
       case 'lastMonth':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
         break;
       case 'lastQuarter':
         const quarterStart = Math.floor(now.getMonth() / 3) * 3;
@@ -218,7 +218,7 @@ const DateReport: React.FC = () => {
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="lastWeek">Última Semana</option>
-                <option value="lastMonth">Último Mes</option>
+                <option value="lastMonth">Mes Actual</option>
                 <option value="lastQuarter">Último Trimestre</option>
                 <option value="lastYear">Último Año</option>
                 <option value="custom">Personalizado</option>
