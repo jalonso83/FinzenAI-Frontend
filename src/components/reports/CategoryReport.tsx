@@ -122,6 +122,9 @@ const CategoryReport: React.FC = () => {
       }
 
       const response = await api.get(`/reports/categories?${params.toString()}`);
+      console.log('CategoryReport response:', response.data);
+      console.log('CategoryData for PieChart:', response.data.categoryData);
+      console.log('ChartData for LineChart:', response.data.chartData);
       setReportData(response.data);
     } catch (error: any) {
       console.error('Error cargando reporte:', error);
@@ -242,9 +245,9 @@ const CategoryReport: React.FC = () => {
           </div>
 
           {/* Filtro de Categorías */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1 lg:flex-initial">
             <Tag className="w-5 h-5 text-gray-500" />
-            <div className="min-w-64">
+            <div className="min-w-80 w-full lg:w-80">
               <CategoryMultiSelect
                 categories={categories}
                 selectedCategories={selectedCategories}

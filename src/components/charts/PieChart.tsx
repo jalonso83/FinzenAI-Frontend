@@ -29,7 +29,10 @@ interface PieChartProps {
 }
 
 const PieChart: React.FC<PieChartProps> = ({ data, title = "Distribución por Categorías" }) => {
+  console.log('PieChart data received:', data);
+  
   if (!data || data.length === 0) {
+    console.log('PieChart: No data available');
     return (
       <div className="h-64 flex items-center justify-center text-gray-500">
         <div className="text-center">
@@ -153,11 +156,24 @@ const PieChart: React.FC<PieChartProps> = ({ data, title = "Distribución por Ca
     }
   };
 
-  return (
-    <div className="h-64 relative">
-      <Pie data={chartData} options={options} />
-    </div>
-  );
+  try {
+    return (
+      <div className="h-64 relative">
+        <Pie data={chartData} options={options} />
+      </div>
+    );
+  } catch (error) {
+    console.error('Error rendering PieChart:', error);
+    return (
+      <div className="h-64 flex items-center justify-center text-red-500">
+        <div className="text-center">
+          <div className="text-4xl mb-2">⚠️</div>
+          <p>Error al cargar el gráfico</p>
+          <p className="text-sm">{error instanceof Error ? error.message : 'Error desconocido'}</p>
+        </div>
+      </div>
+    );
+  }
 };
 
 export default PieChart;
