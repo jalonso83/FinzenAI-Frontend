@@ -151,7 +151,6 @@ const CategoryReport: React.FC = () => {
     try {
       const { startDate, endDate } = getDateRange();
       const params = new URLSearchParams({
-        format,
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString()
       });
@@ -160,11 +159,232 @@ const CategoryReport: React.FC = () => {
         params.append('categories', selectedCategories.join(','));
       }
 
-      const response = await api.get(`/reports/categories/export?${params.toString()}`);
-      // Aquí se implementaría la descarga del archivo
-      console.log('Exportar:', format, response.data);
+      if (format === 'excel') {
+        // Exportar a Excel usando CSV del backend
+        params.append('format', 'csv');
+        
+        const response = await api.get(`/reports/categories/export?${params.toString()}`, {
+          responseType: 'blob'
+        });
+
+        // Crear y descargar el archivo
+        const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `reporte-categorias-${startDate.toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+      } else if (format === 'pdf') {
+        // Para PDF, obtenemos los datos del backend y generamos PDF en el frontend
+        params.append('format', 'json');
+        
+        const response = await api.get(`/reports/categories/export?${params.toString()}`);
+        const exportData = response.data;
+        
+        // Generar PDF usando los datos
+        await generatePDF(exportData);
+      }
+      
     } catch (error) {
       console.error('Error exportando:', error);
+      // Mostrar notificación de error al usuario
+      if (error instanceof Error) {
+        console.error('Error específico:', error.message);
+      }
+    }
+  };
+
+  const generatePDF = async (data: any) => {
+    // Crear una página HTML formateada para imprimir como PDF
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Reporte por Categorías - FinZen AI</title>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                margin: 20px; 
+                color: #333;
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 30px;
+                border-bottom: 2px solid #3B82F6;
+                padding-bottom: 20px;
+              }
+              .header h1 {
+                color: #3B82F6;
+                margin: 0;
+                font-size: 28px;
+              }
+              .period {
+                color: #666;
+                margin: 10px 0;
+                font-size: 14px;
+              }
+              .summary {
+                background: #F8FAFC;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+                border-left: 4px solid #3B82F6;
+              }
+              .summary h2 {
+                color: #1E40AF;
+                margin-top: 0;
+                font-size: 18px;
+              }
+              .summary-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+                margin-top: 15px;
+              }
+              .summary-item {
+                display: flex;
+                justify-content: space-between;
+                padding: 8px;
+                background: white;
+                border-radius: 4px;
+              }
+              table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 20px 0;
+                font-size: 12px;
+              }
+              th {
+                background: #3B82F6;
+                color: white;
+                padding: 12px 8px;
+                text-align: left;
+                font-weight: bold;
+              }
+              td {
+                padding: 10px 8px;
+                border-bottom: 1px solid #E5E7EB;
+              }
+              tr:nth-child(even) {
+                background: #F9FAFB;
+              }
+              .expense { color: #DC2626; }
+              .income { color: #059669; }
+              .percentage {
+                background: #EFF6FF;
+                padding: 4px 8px;
+                border-radius: 12px;
+                color: #1D4ED8;
+                font-weight: bold;
+              }
+              .footer {
+                margin-top: 40px;
+                text-align: center;
+                color: #6B7280;
+                font-size: 12px;
+                border-top: 1px solid #E5E7EB;
+                padding-top: 20px;
+              }
+              @media print {
+                body { margin: 0; }
+                .no-print { display: none; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>📊 Reporte por Categorías</h1>
+              <div class="period">
+                Período: ${data.metadata.dateRange.start} - ${data.metadata.dateRange.end}
+              </div>
+              <div class="period">
+                Generado: ${new Date(data.metadata.generatedAt).toLocaleDateString('es-DO', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </div>
+            </div>
+
+            <div class="summary">
+              <h2>📈 Resumen Ejecutivo</h2>
+              <div class="summary-grid">
+                <div class="summary-item">
+                  <span>💸 Total Gastos:</span>
+                  <strong class="expense">${formatCurrency(data.summary.totalExpenses)}</strong>
+                </div>
+                <div class="summary-item">
+                  <span>💰 Total Ingresos:</span>
+                  <strong class="income">${formatCurrency(data.summary.totalIncome)}</strong>
+                </div>
+                <div class="summary-item">
+                  <span>📝 Total Transacciones:</span>
+                  <strong>${data.summary.totalTransactions}</strong>
+                </div>
+                <div class="summary-item">
+                  <span>🏷️ Categorías Activas:</span>
+                  <strong>${data.summary.activeCategories}</strong>
+                </div>
+              </div>
+            </div>
+
+            <h2>📊 Detalle por Categorías</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>🏷️ Categoría</th>
+                  <th>📋 Tipo</th>
+                  <th>💰 Total</th>
+                  <th>📝 Trans.</th>
+                  <th>📊 Promedio</th>
+                  <th>⬆️ Máximo</th>
+                  <th>⬇️ Mínimo</th>
+                  <th>📈 %</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.categoryData.map((cat: any, index: number) => `
+                  <tr>
+                    <td><strong>${cat.name}</strong></td>
+                    <td class="${cat.type === 'EXPENSE' ? 'expense' : 'income'}">
+                      ${cat.type === 'EXPENSE' ? '📤 Gasto' : '📥 Ingreso'}
+                    </td>
+                    <td><strong>${formatCurrency(cat.total)}</strong></td>
+                    <td>${cat.count}</td>
+                    <td>${formatCurrency(cat.average)}</td>
+                    <td>${formatCurrency(cat.maxAmount)}</td>
+                    <td>${formatCurrency(cat.minAmount)}</td>
+                    <td><span class="percentage">${cat.percentage.toFixed(1)}%</span></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <div class="footer">
+              <p>🤖 Generado automáticamente por <strong>FinZen AI</strong></p>
+              <p>Este reporte contiene información confidencial de sus finanzas personales</p>
+            </div>
+
+            <script>
+              // Auto-print cuando la página cargue
+              window.onload = function() {
+                setTimeout(function() {
+                  window.print();
+                }, 500);
+              }
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
     }
   };
 
