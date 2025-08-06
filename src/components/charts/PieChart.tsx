@@ -4,9 +4,9 @@ import {
   Chart as ChartJS,
   ArcElement,
   Tooltip,
-  Legend,
-  ChartOptions
+  Legend
 } from 'chart.js';
+import type { ChartOptions } from 'chart.js';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -108,10 +108,13 @@ const PieChart: React.FC<PieChartProps> = ({ data, title = "Distribución por Ca
                 const value = dataset.data[i] as number;
                 const percentage = data[i]?.percentage || 0;
                 
+                const bgColor = Array.isArray(dataset.backgroundColor) ? dataset.backgroundColor[i] : dataset.backgroundColor;
+                const borderColor = Array.isArray(dataset.borderColor) ? dataset.borderColor[i] : dataset.borderColor;
+                
                 return {
                   text: `${label} (${percentage.toFixed(1)}%)`,
-                  fillStyle: dataset.backgroundColor?.[i] as string,
-                  strokeStyle: dataset.borderColor?.[i] as string,
+                  fillStyle: bgColor as string,
+                  strokeStyle: borderColor as string,
                   lineWidth: dataset.borderWidth as number,
                   index: i
                 };

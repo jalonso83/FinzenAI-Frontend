@@ -9,9 +9,9 @@ import {
   Title,
   Tooltip,
   Legend,
-  ChartOptions,
   Filler
 } from 'chart.js';
+import type { ChartOptions } from 'chart.js';
 
 ChartJS.register(
   CategoryScale,
