@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth';
 import logoHorizontal from '../assets/logo-horizontal.png';
@@ -29,6 +29,26 @@ const Navigation = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [profileData, setProfileData] = useState(null);
+  
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+
+  // Handle clicks outside of menus
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setShowMobileMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -123,13 +143,9 @@ const Navigation = () => {
               </button>
 
               {/* User Menu */}
-              <div className="relative">
+              <div className="relative" ref={userMenuRef}>
                 <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setShowUserMenu(!showUserMenu);
-                  }}
+                  onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center space-x-2 px-3 py-2 text-white hover:text-warning rounded-lg hover:bg-white/10 transition"
                 >
                   <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-primary font-semibold text-sm nav-avatar">
@@ -146,10 +162,7 @@ const Navigation = () => {
 
                 {/* Menú Desplegable del Usuario */}
                 {showUserMenu && (
-                  <div 
-                    className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-[60] nav-menu-dropdown"
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-[60] nav-menu-dropdown">
                 <div className="px-4 py-2 border-b border-gray-100">
                   <h3 className="text-sm font-semibold text-gray-700">Mi Cuenta</h3>
                 </div>
@@ -157,10 +170,7 @@ const Navigation = () => {
                 <div className="py-1">
                   <button 
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 nav-menu-item" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditProfile();
-                    }}
+                    onClick={handleEditProfile}
                   >
                     <svg className="w-4 h-4 nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -170,10 +180,7 @@ const Navigation = () => {
                   
                   <button 
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 nav-menu-item" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleChangePassword();
-                    }}
+                    onClick={handleChangePassword}
                   >
                     <svg className="w-4 h-4 nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -207,10 +214,7 @@ const Navigation = () => {
                 
                 <div className="border-t border-gray-100 py-1">
                   <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleLogoutClick();
-                    }}
+                    onClick={handleLogoutClick}
                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-3 nav-menu-item"
                   >
                     <svg className="w-4 h-4 nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -228,7 +232,7 @@ const Navigation = () => {
 
         {/* Mobile Navigation Menu */}
         {showMobileMenu && (
-          <div className="lg:hidden bg-primary border-t border-white/10">
+          <div className="lg:hidden bg-primary border-t border-white/10" ref={mobileMenuRef}>
             <div className="px-4 py-3 space-y-1">
               {navItems.map((item) => {
                 const IconComponent = item.icon;
@@ -252,18 +256,6 @@ const Navigation = () => {
         )}
       </nav>
 
-      {/* Overlay para cerrar menús al hacer clic fuera */}
-      {(showUserMenu || showMobileMenu) && (
-        <div 
-          className="fixed inset-0 z-40 bg-black/20 lg:bg-transparent" 
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setShowUserMenu(false);
-            setShowMobileMenu(false);
-          }}
-        />
-      )}
       {showProfileModal && profileData && (
         <ProfileForm
           user={profileData}
