@@ -284,7 +284,7 @@ const Navigation = () => {
           onClose={() => setShowChangePasswordModal(false)}
         />
       )}
-    </nav>
+    </>
   );
 };
 
