@@ -3,7 +3,17 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth';
 import logoHorizontal from '../assets/logo-horizontal.png';
 import './Navigation.css';
-import { Home } from 'lucide-react';
+import { 
+  Home, 
+  CreditCard, 
+  Target, 
+  TrendingUp, 
+  BarChart3, 
+  Calculator,
+  User,
+  Settings,
+  LogOut
+} from 'lucide-react';
 import ProfileForm from './profile/ProfileForm';
 import ChangePasswordForm from './ChangePasswordForm';
 import api from '../utils/api';
@@ -13,8 +23,6 @@ const Navigation = () => {
   const location = useLocation();
   const { user, logout, updateUser } = useAuthStore();
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showReportsSubmenu, setShowReportsSubmenu] = useState(false);
-  const [showUtilitiesMenu, setShowUtilitiesMenu] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [profileData, setProfileData] = useState(null);
@@ -44,113 +52,78 @@ const Navigation = () => {
     return location.pathname === path;
   };
 
+  const navItems = [
+    { path: '/', icon: Home, label: 'Inicio' },
+    { path: '/transactions', icon: CreditCard, label: 'Transacciones' },
+    { path: '/budgets', icon: Target, label: 'Presupuestos' },
+    { path: '/goals', icon: TrendingUp, label: 'Metas' },
+    { path: '/reports', icon: BarChart3, label: 'Reportes' },
+    { path: '/loan-calculator', icon: Calculator, label: 'Calculadora' },
+  ];
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
+
   return (
-    <nav className="bg-primary shadow-sm border-b border-border px-6 py-3 mb-6">
-      <div className="flex justify-between items-center">
-        {/* Logo y Navegación Principal */}
-        <div className="flex items-center space-x-6">
-          <img 
-            src={logoHorizontal} 
-            alt="FinZen AI" 
-            className="h-10 w-auto mr-2 select-none cursor-pointer hover:opacity-80 transition-opacity" 
-            style={{ minWidth: 120 }}
-            onClick={() => navigate('/')}
-          />
-          <div className="flex space-x-2 md:space-x-4">
-            <button 
+    <nav className="bg-primary shadow-sm border-b border-border mb-6">
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <div className="flex items-center">
+            <img 
+              src={logoHorizontal} 
+              alt="FinZen AI" 
+              className="h-8 w-auto cursor-pointer hover:opacity-80 transition-opacity" 
               onClick={() => navigate('/')}
-              className={`px-3 py-2 rounded-lg transition nav-active-indicator flex items-center justify-center ${
-                isActive('/') 
-                  ? 'bg-white text-primary font-semibold' 
-                  : 'text-white hover:bg-white/10 hover:text-white'
-              }`}
-              aria-label="Inicio"
-            >
-              <Home size={22} className="inline-block" />
-            </button>
-            <button 
-              onClick={() => navigate('/transactions')}
-              className={`px-3 py-2 rounded-lg transition nav-active-indicator ${
-                isActive('/transactions') 
-                  ? 'bg-white text-primary font-semibold' 
-                  : 'text-white hover:bg-white/10 hover:text-white'
-              }`}
-            >
-              Transacciones
-            </button>
-            <button 
-              onClick={() => navigate('/budgets')}
-              className={`px-3 py-2 rounded-lg transition nav-active-indicator ${
-                isActive('/budgets') 
-                  ? 'bg-white text-primary font-semibold' 
-                  : 'text-white hover:bg-white/10 hover:text-white'
-              }`}
-            >
-              Presupuestos
-            </button>
-            <button 
-              onClick={() => navigate('/goals')}
-              className={`px-3 py-2 rounded-lg transition nav-active-indicator ${
-                isActive('/goals') 
-                  ? 'bg-white text-primary font-semibold' 
-                  : 'text-white hover:bg-white/10 hover:text-white'
-              }`}
-            >
-              Metas
-            </button>
-            <button 
-              onClick={() => navigate('/reports')}
-              className={`px-3 py-2 rounded-lg transition nav-active-indicator ${
-                isActive('/reports') 
-                  ? 'bg-white text-primary font-semibold' 
-                  : 'text-white hover:bg-white/10 hover:text-white'
-              }`}
-            >
-              Reportes
-            </button>
-            
-            {/* Menú de Utilidades */}
-            <div className="relative">
-              <button
-                onClick={() => setShowUtilitiesMenu(!showUtilitiesMenu)}
-                className={`px-3 py-2 rounded-lg transition nav-active-indicator flex items-center space-x-2 ${
-                  isActive('/loan-calculator') 
-                    ? 'bg-white text-primary font-semibold' 
-                    : 'text-white hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <span>+ Herramientas</span>
-                <svg className={`w-4 h-4 transition-transform nav-icon ${showUtilitiesMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {/* Menú Desplegable de Utilidades */}
-              {showUtilitiesMenu && (
-                <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 nav-menu-dropdown">
-                  <div className="py-1">
-                    <button 
-                      onClick={() => {
-                        navigate('/loan-calculator');
-                        setShowUtilitiesMenu(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 nav-menu-item"
-                    >
-                      <svg className="w-4 h-4 nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                      </svg>
-                      <span>Calculadora de Préstamos</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            />
           </div>
-        </div>
 
-        {/* Menú del Usuario */}
-        <div className="flex items-center space-x-4">
-          {/* Menú del Usuario */}
+          {/* Desktop Navigation */}
+          <div className="hidden lg:flex lg:items-center lg:space-x-4">
+            {navItems.map((item) => {
+              const IconComponent = item.icon;
+              return (
+                <button
+                  key={item.path}
+                  onClick={() => handleNavigation(item.path)}
+                  className={`inline-flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive(item.path)
+                      ? 'bg-white text-primary'
+                      : 'text-white hover:bg-white/10'
+                  }`}
+                >
+                  <IconComponent size={18} className="mr-2" />
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Mobile Navigation - Horizontal Scroll */}
+          <div className="flex lg:hidden overflow-x-auto space-x-1 px-2 py-2 scrollbar-hide">
+            {navItems.map((item) => {
+              const IconComponent = item.icon;
+              return (
+                <button
+                  key={item.path}
+                  onClick={() => handleNavigation(item.path)}
+                  className={`flex-shrink-0 inline-flex flex-col items-center px-2 py-2 rounded-md text-xs font-medium transition-all duration-200 min-w-[65px] ${
+                    isActive(item.path)
+                      ? 'bg-white text-primary shadow-sm'
+                      : 'text-white/90 hover:bg-white/10 hover:text-white hover:scale-105'
+                  }`}
+                >
+                  <IconComponent size={14} className="mb-1" />
+                  <span className="truncate text-[10px] leading-tight">{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Right side - User menu */}
+          <div className="flex items-center space-x-2">
+            {/* User Menu Desktop */}
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
@@ -228,17 +201,16 @@ const Navigation = () => {
               </div>
             )}
           </div>
+          </div>
         </div>
       </div>
 
       {/* Overlay para cerrar menús al hacer clic fuera */}
-      {(showUserMenu || showUtilitiesMenu) && (
+      {showUserMenu && (
         <div 
           className="fixed inset-0 z-40 nav-overlay" 
           onClick={() => {
             setShowUserMenu(false);
-            setShowReportsSubmenu(false);
-            setShowUtilitiesMenu(false);
           }}
         />
       )}
