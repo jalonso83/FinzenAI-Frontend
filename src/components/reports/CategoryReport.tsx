@@ -46,7 +46,7 @@ const CategoryReport: React.FC = () => {
   const [reportData, setReportData] = useState<CategoryReportData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'expenses' | 'income'>('expenses');
+  const [activeTab, setActiveTab] = useState<'expenses' | 'income'>('income');
   const [dateRange, setDateRange] = useState('currentMonth');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [customStartDate, setCustomStartDate] = useState('');
@@ -470,16 +470,6 @@ const CategoryReport: React.FC = () => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
           <button
-            onClick={() => handleTabChange('expenses')}
-            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-              activeTab === 'expenses'
-                ? 'bg-white text-red-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            💸 Gastos
-          </button>
-          <button
             onClick={() => handleTabChange('income')}
             className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
               activeTab === 'income'
@@ -488,6 +478,16 @@ const CategoryReport: React.FC = () => {
             }`}
           >
             💰 Ingresos
+          </button>
+          <button
+            onClick={() => handleTabChange('expenses')}
+            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              activeTab === 'expenses'
+                ? 'bg-white text-red-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            💸 Gastos
           </button>
         </div>
       </div>

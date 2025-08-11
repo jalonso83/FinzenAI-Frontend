@@ -273,8 +273,8 @@ const DateReport: React.FC = () => {
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="both">Ambos</option>
-                <option value="expenses">Solo Gastos</option>
                 <option value="income">Solo Ingresos</option>
+                <option value="expenses">Solo Gastos</option>
               </select>
             </div>
           </div>
@@ -310,26 +310,6 @@ const DateReport: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Gastos</p>
-                  <p className="text-xl font-bold text-red-600">
-                    {formatCurrency(reportData.metrics.totalExpenses)}
-                  </p>
-                </div>
-                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                  <span className="text-red-600 text-sm">💸</span>
-                </div>
-              </div>
-              <div className="flex items-center mt-2">
-                {getTrendIcon(reportData.metrics.expensesGrowth)}
-                <span className="text-sm text-gray-600 ml-1">
-                  {formatPercent(reportData.metrics.expensesGrowth)}
-                </span>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <div className="flex items-center justify-between">
-                <div>
                   <p className="text-sm text-gray-600">Total Ingresos</p>
                   <p className="text-xl font-bold text-green-600">
                     {formatCurrency(reportData.metrics.totalIncome)}
@@ -343,6 +323,26 @@ const DateReport: React.FC = () => {
                 {getTrendIcon(reportData.metrics.incomeGrowth)}
                 <span className="text-sm text-gray-600 ml-1">
                   {formatPercent(reportData.metrics.incomeGrowth)}
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Total Gastos</p>
+                  <p className="text-xl font-bold text-red-600">
+                    {formatCurrency(reportData.metrics.totalExpenses)}
+                  </p>
+                </div>
+                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                  <span className="text-red-600 text-sm">💸</span>
+                </div>
+              </div>
+              <div className="flex items-center mt-2">
+                {getTrendIcon(reportData.metrics.expensesGrowth)}
+                <span className="text-sm text-gray-600 ml-1">
+                  {formatPercent(reportData.metrics.expensesGrowth)}
                 </span>
               </div>
             </div>
