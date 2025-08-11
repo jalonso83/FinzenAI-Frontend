@@ -629,12 +629,12 @@ const CategoryReport: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">{tabTexts.totalLabel}</p>
-                  <p className={`text-xl font-bold text-${tabTexts.color}-600`}>
-                    {formatCurrency(reportData.metrics[tabTexts.totalKey])}
+                  <p className={activeTab === 'expenses' ? 'text-xl font-bold text-red-600' : 'text-xl font-bold text-green-600'}>
+                    {activeTab === 'expenses' ? formatCurrency(reportData.metrics.totalExpenses) : formatCurrency(reportData.metrics.totalIncome)}
                   </p>
                 </div>
-                <div className={`w-8 h-8 bg-${tabTexts.color}-100 rounded-full flex items-center justify-center`}>
-                  <span className={`text-${tabTexts.color}-600 text-sm`}>{activeTab === 'expenses' ? '💸' : '💰'}</span>
+                <div className={activeTab === 'expenses' ? 'w-8 h-8 bg-red-100 rounded-full flex items-center justify-center' : 'w-8 h-8 bg-green-100 rounded-full flex items-center justify-center'}>
+                  <span className={activeTab === 'expenses' ? 'text-red-600 text-sm' : 'text-green-600 text-sm'}>{activeTab === 'expenses' ? '💸' : '💰'}</span>
                 </div>
               </div>
             </div>
