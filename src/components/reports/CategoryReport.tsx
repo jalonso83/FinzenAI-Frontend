@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Download, Filter, RefreshCw, Calendar, Tag } from 'lucide-react';
 import api from '../../utils/api';
 import { useCategoriesStore } from '../../stores/categories';
@@ -54,7 +54,10 @@ const CategoryReport: React.FC = () => {
   const { categories, fetchCategories } = useCategoriesStore();
   
   // Filtrar solo categorías de gastos
-  const expenseCategories = categories.filter(cat => cat.type === 'EXPENSE');
+  const expenseCategories = useMemo(() => 
+    categories.filter(cat => cat.type === 'EXPENSE'), 
+    [categories]
+  );
 
   useEffect(() => {
     fetchCategories();
@@ -69,7 +72,7 @@ const CategoryReport: React.FC = () => {
       }, 300);
       return () => clearTimeout(timeoutId);
     }
-  }, [dateRange, selectedCategories, expenseCategories]);
+  }, [dateRange, selectedCategories, categories]);
 
   const getDateRange = () => {
     const now = new Date();
