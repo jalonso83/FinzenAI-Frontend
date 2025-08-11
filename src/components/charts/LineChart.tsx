@@ -71,19 +71,32 @@ const LineChart: React.FC<LineChartProps> = ({ data, title = "Tendencias Mensual
 
   const categories = Array.from(allCategories);
 
-  // Generar colores para las líneas
-  const generateLineColors = (count: number) => {
-    const colors = [
-      '#EF4444', '#F97316', '#F59E0B', '#EAB308', '#84CC16',
-      '#22C55E', '#10B981', '#14B8A6', '#06B6D4', '#0EA5E9',
-      '#3B82F6', '#6366F1', '#8B5CF6', '#A855F7', '#D946EF',
-      '#EC4899', '#F43F5E', '#FB7185', '#FD6C6C', '#FE9595'
+  // Generar colores para las líneas con colores específicos para finanzas
+  const getColorForCategory = (categoryName: string, index: number) => {
+    // Colores específicos para categorías financieras
+    const specialColors: { [key: string]: string } = {
+      'Gastos': '#DC2626',      // Rojo para gastos (text-red-600)
+      'Ingresos': '#059669',    // Verde para ingresos (text-green-600) 
+      'Balance': '#2563EB'      // Azul para balance (text-blue-600 - color primario de la app)
+    };
+
+    // Si es una categoría especial, usar su color
+    if (specialColors[categoryName]) {
+      return specialColors[categoryName];
+    }
+
+    // Colores fallback para otras categorías
+    const fallbackColors = [
+      '#F97316', '#F59E0B', '#EAB308', '#84CC16',
+      '#10B981', '#14B8A6', '#06B6D4', '#6366F1', 
+      '#8B5CF6', '#A855F7', '#D946EF', '#EC4899', 
+      '#F43F5E', '#FB7185', '#FD6C6C', '#FE9595'
     ];
     
-    return colors.slice(0, count);
+    return fallbackColors[index % fallbackColors.length];
   };
 
-  const colors = generateLineColors(categories.length);
+  const colors = categories.map((category, index) => getColorForCategory(category, index));
 
   const chartData = {
     labels: data.map(item => formatMonthLabel(item.month)),
