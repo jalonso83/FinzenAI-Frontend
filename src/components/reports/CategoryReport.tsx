@@ -52,6 +52,9 @@ const CategoryReport: React.FC = () => {
   const [customEndDate, setCustomEndDate] = useState('');
   
   const { categories, fetchCategories } = useCategoriesStore();
+  
+  // Filtrar solo categorías de gastos
+  const expenseCategories = categories.filter(cat => cat.type === 'EXPENSE');
 
   useEffect(() => {
     fetchCategories();
@@ -59,14 +62,14 @@ const CategoryReport: React.FC = () => {
 
   // Auto-cargar datos cuando cambien los filtros o se carguen las categorías (con debounce)
   useEffect(() => {
-    if (categories.length > 0) {
+    if (expenseCategories.length > 0 && dateRange !== 'custom') {
+      // Para filtros no personalizados, cargar automáticamente
       const timeoutId = setTimeout(() => {
         loadReportData();
-      }, 300); // Debounce de 300ms
-
+      }, 300);
       return () => clearTimeout(timeoutId);
     }
-  }, [dateRange, selectedCategories, categories]);
+  }, [dateRange, selectedCategories, expenseCategories]);
 
   const getDateRange = () => {
     const now = new Date();
@@ -84,11 +87,6 @@ const CategoryReport: React.FC = () => {
       case 'last3Months':
         startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
         endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-        break;
-      case 'lastQuarter':
-        const quarterStart = Math.floor(now.getMonth() / 3) * 3;
-        startDate = new Date(now.getFullYear(), quarterStart - 3, 1);
-        endDate = new Date(now.getFullYear(), quarterStart, 0, 23, 59, 59);
         break;
       case 'lastYear':
         startDate = new Date(now.getFullYear() - 1, 0, 1);
@@ -440,26 +438,36 @@ const CategoryReport: React.FC = () => {
                 <option value="currentMonth">Este Mes</option>
                 <option value="lastMonth">Mes Anterior</option>
                 <option value="last3Months">Últimos 3 Meses</option>
-                <option value="lastQuarter">Último Trimestre</option>
                 <option value="lastYear">Año Anterior</option>
                 <option value="custom">Personalizado</option>
               </select>
             </div>
 
             {dateRange === 'custom' && (
-              <div className="flex gap-2">
-                <input
-                  type="date"
-                  value={customStartDate}
-                  onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-                <input
-                  type="date"
-                  value={customEndDate}
-                  onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                />
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    placeholder="Fecha inicio"
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <input
+                    type="date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    placeholder="Fecha fin"
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <button
+                  onClick={loadReportData}
+                  disabled={!customStartDate || !customEndDate || loading}
+                  className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading ? 'Cargando...' : 'Aplicar Filtro'}
+                </button>
               </div>
             )}
           </div>
@@ -469,10 +477,10 @@ const CategoryReport: React.FC = () => {
             <Tag className="w-5 h-5 text-gray-500" />
             <div className="min-w-96 w-full lg:w-96">
               <CategoryMultiSelect
-                categories={categories}
+                categories={expenseCategories}
                 selectedCategories={selectedCategories}
                 onSelectionChange={setSelectedCategories}
-                placeholder="Todas las categorías"
+                placeholder="Todas las categorías de gastos"
               />
             </div>
           </div>
@@ -516,21 +524,21 @@ const CategoryReport: React.FC = () => {
 
       </div>
 
-      {!reportData && !loading && !error && categories.length === 0 && (
+      {!reportData && !loading && !error && expenseCategories.length === 0 && (
         <div className="text-center py-12">
           <div className="text-gray-400 mb-4">
             <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Cargando categorías...</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Cargando categorías de gastos...</h3>
           <p className="text-gray-500">
-            Preparando el análisis de tus gastos e ingresos organizados por categorías.
+            Preparando el análisis de tus gastos organizados por categorías.
           </p>
         </div>
       )}
 
-      {!reportData && !loading && !error && categories.length > 0 && (
+      {!reportData && !loading && !error && expenseCategories.length > 0 && (
         <div className="text-center py-12">
           <div className="text-gray-400 mb-4">
             <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">

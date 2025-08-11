@@ -69,12 +69,14 @@ const DateReport: React.FC = () => {
 
   // Auto-cargar datos cuando cambien los filtros (con debounce)
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      loadReportData();
-    }, 300); // Debounce de 300ms
-
-    return () => clearTimeout(timeoutId);
-  }, [dateRange, granularity, transactionType, customStartDate, customEndDate]);
+    if (dateRange !== 'custom') {
+      // Para filtros no personalizados, cargar automáticamente
+      const timeoutId = setTimeout(() => {
+        loadReportData();
+      }, 300);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [dateRange, granularity, transactionType]);
 
   const getDateRange = () => {
     const now = new Date();
@@ -88,11 +90,6 @@ const DateReport: React.FC = () => {
       case 'lastMonth':
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
         endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-        break;
-      case 'lastQuarter':
-        const quarterStart = Math.floor(now.getMonth() / 3) * 3;
-        startDate = new Date(now.getFullYear(), quarterStart - 3, 1);
-        endDate = new Date(now.getFullYear(), quarterStart, 0, 23, 59, 59);
         break;
       case 'lastYear':
         startDate = new Date(now.getFullYear() - 1, 0, 1);
@@ -219,26 +216,36 @@ const DateReport: React.FC = () => {
               >
                 <option value="lastWeek">Última Semana</option>
                 <option value="lastMonth">Mes Actual</option>
-                <option value="lastQuarter">Último Trimestre</option>
                 <option value="lastYear">Último Año</option>
                 <option value="custom">Personalizado</option>
               </select>
             </div>
 
             {dateRange === 'custom' && (
-              <div className="flex gap-2">
-                <input
-                  type="date"
-                  value={customStartDate}
-                  onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-                <input
-                  type="date"
-                  value={customEndDate}
-                  onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                />
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    placeholder="Fecha inicio"
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <input
+                    type="date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    placeholder="Fecha fin"
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <button
+                  onClick={loadReportData}
+                  disabled={!customStartDate || !customEndDate || loading}
+                  className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading ? 'Cargando...' : 'Aplicar Filtro'}
+                </button>
               </div>
             )}
           </div>
