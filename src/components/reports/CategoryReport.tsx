@@ -319,32 +319,31 @@ const CategoryReport: React.FC = () => {
               <h2>📈 Resumen Ejecutivo</h2>
               <div class="summary-grid">
                 <div class="summary-item">
-                  <span>💸 Total Gastos:</span>
+                  <span>💸 Total Gastado:</span>
                   <strong class="expense">${formatCurrency(data.summary.totalExpenses)}</strong>
                 </div>
                 <div class="summary-item">
-                  <span>💰 Total Ingresos:</span>
-                  <strong class="income">${formatCurrency(data.summary.totalIncome)}</strong>
-                </div>
-                <div class="summary-item">
-                  <span>📝 Total Transacciones:</span>
+                  <span>📝 Total Transacciones de Gastos:</span>
                   <strong>${data.summary.totalTransactions}</strong>
                 </div>
                 <div class="summary-item">
-                  <span>🏷️ Categorías Activas:</span>
+                  <span>🏷️ Categorías de Gastos:</span>
                   <strong>${data.summary.activeCategories}</strong>
+                </div>
+                <div class="summary-item">
+                  <span>📊 Promedio por Transacción:</span>
+                  <strong>${formatCurrency(data.summary.totalExpenses / data.summary.totalTransactions || 0)}</strong>
                 </div>
               </div>
             </div>
 
-            <h2>📊 Detalle por Categorías</h2>
+            <h2>📊 Detalle por Categorías de Gastos</h2>
             <table>
               <thead>
                 <tr>
                   <th>🏷️ Categoría</th>
-                  <th>📋 Tipo</th>
-                  <th>💰 Total</th>
-                  <th>📝 Trans.</th>
+                  <th>💰 Total Gastado</th>
+                  <th>📝 Transacciones</th>
                   <th>📊 Promedio</th>
                   <th>⬆️ Máximo</th>
                   <th>⬇️ Mínimo</th>
@@ -355,9 +354,6 @@ const CategoryReport: React.FC = () => {
                 ${data.categoryData.map((cat: any, index: number) => `
                   <tr>
                     <td><strong>${cat.name}</strong></td>
-                    <td class="${cat.type === 'EXPENSE' ? 'expense' : 'income'}">
-                      ${cat.type === 'EXPENSE' ? '📤 Gasto' : '📥 Ingreso'}
-                    </td>
                     <td><strong>${formatCurrency(cat.total)}</strong></td>
                     <td>${cat.count}</td>
                     <td>${formatCurrency(cat.average)}</td>
@@ -562,7 +558,7 @@ const CategoryReport: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Gastos</p>
+                  <p className="text-sm text-gray-600">Total Gastado</p>
                   <p className="text-xl font-bold text-red-600">
                     {formatCurrency(reportData.metrics.totalExpenses)}
                   </p>
@@ -576,7 +572,7 @@ const CategoryReport: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Promedio</p>
+                  <p className="text-sm text-gray-600">Gasto Promedio</p>
                   <p className="text-xl font-bold text-blue-600">
                     {formatCurrency(reportData.metrics.averageTransactionAmount)}
                   </p>
@@ -590,7 +586,7 @@ const CategoryReport: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Máximo</p>
+                  <p className="text-sm text-gray-600">Mayor Gasto</p>
                   <p className="text-xl font-bold text-orange-600">
                     {formatCurrency(reportData.metrics.maxTransaction)}
                   </p>
@@ -604,7 +600,7 @@ const CategoryReport: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Mínimo</p>
+                  <p className="text-sm text-gray-600">Menor Gasto</p>
                   <p className="text-xl font-bold text-green-600">
                     {formatCurrency(reportData.metrics.minTransaction)}
                   </p>
@@ -618,7 +614,7 @@ const CategoryReport: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Categorías</p>
+                  <p className="text-sm text-gray-600">Categorías de Gastos</p>
                   <p className="text-xl font-bold text-purple-600">
                     {reportData.metrics.activeCategories}
                   </p>
