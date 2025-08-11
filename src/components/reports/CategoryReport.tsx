@@ -46,6 +46,7 @@ const CategoryReport: React.FC = () => {
   const [reportData, setReportData] = useState<CategoryReportData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'expenses' | 'income'>('expenses');
   const [dateRange, setDateRange] = useState('currentMonth');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [customStartDate, setCustomStartDate] = useState('');
@@ -53,26 +54,26 @@ const CategoryReport: React.FC = () => {
   
   const { categories, fetchCategories } = useCategoriesStore();
   
-  // Filtrar solo categorías de gastos
-  const expenseCategories = useMemo(() => 
-    categories.filter(cat => cat.type === 'EXPENSE'), 
-    [categories]
+  // Filtrar categorías según el tab activo
+  const filteredCategories = useMemo(() => 
+    categories.filter(cat => cat.type === (activeTab === 'expenses' ? 'EXPENSE' : 'INCOME')), 
+    [categories, activeTab]
   );
 
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
 
-  // Auto-cargar datos cuando cambien los filtros o se carguen las categorías (con debounce)
+  // Auto-cargar datos cuando cambien los filtros, tab activo o se carguen las categorías (con debounce)
   useEffect(() => {
-    if (expenseCategories.length > 0 && dateRange !== 'custom') {
+    if (filteredCategories.length > 0 && dateRange !== 'custom') {
       // Para filtros no personalizados, cargar automáticamente
       const timeoutId = setTimeout(() => {
         loadReportData();
       }, 300);
       return () => clearTimeout(timeoutId);
     }
-  }, [dateRange, selectedCategories, categories]);
+  }, [dateRange, selectedCategories, categories, activeTab]);
 
   const getDateRange = () => {
     const now = new Date();
@@ -122,7 +123,8 @@ const CategoryReport: React.FC = () => {
         params.append('categories', selectedCategories.join(','));
       }
 
-      const response = await api.get(`/reports/categories?${params.toString()}`);
+      const endpoint = activeTab === 'expenses' ? '/reports/categories' : '/reports/income';
+      const response = await api.get(`${endpoint}?${params.toString()}`);
       console.log('CategoryReport response:', response.data);
       console.log('CategoryData for PieChart:', response.data.categoryData);
       console.log('ChartData for LineChart:', response.data.chartData);
@@ -147,6 +149,46 @@ const CategoryReport: React.FC = () => {
     return `${percent.toFixed(1)}%`;
   };
 
+  // Helper para obtener textos dinámicos según el tab activo
+  const getTabTexts = () => {
+    if (activeTab === 'expenses') {
+      return {
+        tabTitle: 'Gastos',
+        totalLabel: 'Total Gastado',
+        averageLabel: 'Gasto Promedio',
+        maxLabel: 'Mayor Gasto',
+        minLabel: 'Menor Gasto',
+        categoriesLabel: 'Categorías de Gastos',
+        placeholderText: 'Todas las categorías de gastos',
+        loadingText: 'Cargando categorías de gastos...',
+        emptyText: 'Preparando el análisis de tus gastos organizados por categorías.',
+        totalKey: 'totalExpenses',
+        color: 'red'
+      };
+    } else {
+      return {
+        tabTitle: 'Ingresos',
+        totalLabel: 'Total Recibido',
+        averageLabel: 'Ingreso Promedio',
+        maxLabel: 'Mayor Ingreso',
+        minLabel: 'Menor Ingreso',
+        categoriesLabel: 'Categorías de Ingresos',
+        placeholderText: 'Todas las categorías de ingresos',
+        loadingText: 'Cargando categorías de ingresos...',
+        emptyText: 'Preparando el análisis de tus ingresos organizados por categorías.',
+        totalKey: 'totalIncome',
+        color: 'green'
+      };
+    }
+  };
+
+  // Función para cambiar de tab
+  const handleTabChange = (newTab: 'expenses' | 'income') => {
+    setActiveTab(newTab);
+    setSelectedCategories([]); // Limpiar categorías seleccionadas
+    setReportData(null); // Limpiar datos del reporte anterior
+    setError(null); // Limpiar errores
+  };
 
   const handleExport = async (format: 'pdf' | 'excel') => {
     try {
@@ -420,8 +462,36 @@ const CategoryReport: React.FC = () => {
     );
   }
 
+  const tabTexts = getTabTexts();
+
   return (
     <div className="space-y-6">
+      {/* Tabs de Gastos/Ingresos */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+          <button
+            onClick={() => handleTabChange('expenses')}
+            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              activeTab === 'expenses'
+                ? 'bg-white text-red-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            💸 Gastos
+          </button>
+          <button
+            onClick={() => handleTabChange('income')}
+            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              activeTab === 'income'
+                ? 'bg-white text-green-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            💰 Ingresos
+          </button>
+        </div>
+      </div>
+
       {/* Header con Filtros */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -476,10 +546,10 @@ const CategoryReport: React.FC = () => {
             <Tag className="w-5 h-5 text-gray-500" />
             <div className="min-w-96 w-full lg:w-96">
               <CategoryMultiSelect
-                categories={expenseCategories}
+                categories={filteredCategories}
                 selectedCategories={selectedCategories}
                 onSelectionChange={setSelectedCategories}
-                placeholder="Todas las categorías de gastos"
+                placeholder={tabTexts.placeholderText}
               />
             </div>
           </div>
@@ -523,21 +593,21 @@ const CategoryReport: React.FC = () => {
 
       </div>
 
-      {!reportData && !loading && !error && expenseCategories.length === 0 && (
+      {!reportData && !loading && !error && filteredCategories.length === 0 && (
         <div className="text-center py-12">
           <div className="text-gray-400 mb-4">
             <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Cargando categorías de gastos...</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">{tabTexts.loadingText}</h3>
           <p className="text-gray-500">
-            Preparando el análisis de tus gastos organizados por categorías.
+            {tabTexts.emptyText}
           </p>
         </div>
       )}
 
-      {!reportData && !loading && !error && expenseCategories.length > 0 && (
+      {!reportData && !loading && !error && filteredCategories.length > 0 && (
         <div className="text-center py-12">
           <div className="text-gray-400 mb-4">
             <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -558,13 +628,13 @@ const CategoryReport: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Gastado</p>
-                  <p className="text-xl font-bold text-red-600">
-                    {formatCurrency(reportData.metrics.totalExpenses)}
+                  <p className="text-sm text-gray-600">{tabTexts.totalLabel}</p>
+                  <p className={`text-xl font-bold text-${tabTexts.color}-600`}>
+                    {formatCurrency(reportData.metrics[tabTexts.totalKey])}
                   </p>
                 </div>
-                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                  <span className="text-red-600 text-sm">💸</span>
+                <div className={`w-8 h-8 bg-${tabTexts.color}-100 rounded-full flex items-center justify-center`}>
+                  <span className={`text-${tabTexts.color}-600 text-sm`}>{activeTab === 'expenses' ? '💸' : '💰'}</span>
                 </div>
               </div>
             </div>
@@ -572,7 +642,7 @@ const CategoryReport: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Gasto Promedio</p>
+                  <p className="text-sm text-gray-600">{tabTexts.averageLabel}</p>
                   <p className="text-xl font-bold text-blue-600">
                     {formatCurrency(reportData.metrics.averageTransactionAmount)}
                   </p>
@@ -586,7 +656,7 @@ const CategoryReport: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Mayor Gasto</p>
+                  <p className="text-sm text-gray-600">{tabTexts.maxLabel}</p>
                   <p className="text-xl font-bold text-orange-600">
                     {formatCurrency(reportData.metrics.maxTransaction)}
                   </p>
@@ -600,7 +670,7 @@ const CategoryReport: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Menor Gasto</p>
+                  <p className="text-sm text-gray-600">{tabTexts.minLabel}</p>
                   <p className="text-xl font-bold text-green-600">
                     {formatCurrency(reportData.metrics.minTransaction)}
                   </p>
@@ -614,7 +684,7 @@ const CategoryReport: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Categorías de Gastos</p>
+                  <p className="text-sm text-gray-600">{tabTexts.categoriesLabel}</p>
                   <p className="text-xl font-bold text-purple-600">
                     {reportData.metrics.activeCategories}
                   </p>
