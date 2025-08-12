@@ -35,18 +35,35 @@ const Navigation = () => {
 
   // Handle clicks outside of menus
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-        setShowUserMenu(false);
-      }
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
-        setShowMobileMenu(false);
-      }
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
+      
+      // Verificar si el target es válido y existe
+      if (!target || !document.contains(target)) return;
+      
+      // Agregar un pequeño delay para evitar que el click que abre el menú lo cierre inmediatamente
+      setTimeout(() => {
+        // Verificar que los elementos aún existen y el target sigue siendo válido
+        if (userMenuRef.current && document.contains(userMenuRef.current) && !userMenuRef.current.contains(target)) {
+          setShowUserMenu(false);
+        }
+        if (mobileMenuRef.current && document.contains(mobileMenuRef.current) && !mobileMenuRef.current.contains(target)) {
+          setShowMobileMenu(false);
+        }
+      }, 50); // Aumenté el delay a 50ms para mejor compatibilidad móvil
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    // Solo agregar listeners si están disponibles
+    if (typeof document !== 'undefined') {
+      document.addEventListener('mousedown', handleClickOutside, { passive: true });
+      document.addEventListener('touchstart', handleClickOutside, { passive: true });
+    }
+    
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener('touchstart', handleClickOutside);
+      }
     };
   }, []);
 
@@ -145,8 +162,11 @@ const Navigation = () => {
               {/* User Menu */}
               <div className="relative" ref={userMenuRef}>
                 <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-2 px-3 py-2 text-white hover:text-warning rounded-lg hover:bg-white/10 transition"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowUserMenu(!showUserMenu);
+                  }}
+                  className="flex items-center space-x-2 px-3 py-2 text-white hover:text-warning rounded-lg hover:bg-white/10 transition touch-manipulation"
                 >
                   <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-primary font-semibold text-sm nav-avatar">
                     {user?.name?.charAt(0)?.toUpperCase() || 'U'}
@@ -162,15 +182,21 @@ const Navigation = () => {
 
                 {/* Menú Desplegable del Usuario */}
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-[60] nav-menu-dropdown">
+                  <div 
+                    className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-[60] nav-menu-dropdown"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                 <div className="px-4 py-2 border-b border-gray-100">
                   <h3 className="text-sm font-semibold text-gray-700">Mi Cuenta</h3>
                 </div>
                 
                 <div className="py-1">
                   <button 
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 nav-menu-item" 
-                    onClick={handleEditProfile}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 nav-menu-item touch-manipulation" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditProfile();
+                    }}
                   >
                     <svg className="w-4 h-4 nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -179,8 +205,11 @@ const Navigation = () => {
                   </button>
                   
                   <button 
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 nav-menu-item" 
-                    onClick={handleChangePassword}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 nav-menu-item touch-manipulation" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleChangePassword();
+                    }}
                   >
                     <svg className="w-4 h-4 nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -188,7 +217,10 @@ const Navigation = () => {
                     <span>Cambiar Contraseña</span>
                   </button>
                   
-                  <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 nav-menu-item">
+                  <button 
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 nav-menu-item touch-manipulation"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <svg className="w-4 h-4 nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4 19h6v-6H4v6zM4 5h6V4a2 2 0 00-2-2H6a2 2 0 00-2 2v1zM14 5h6V4a2 2 0 00-2-2h-2a2 2 0 00-2 2v1zM4 12h6v-1H4v1zM14 12h6v-1h-6v1z" />
                     </svg>
@@ -197,14 +229,20 @@ const Navigation = () => {
                   
 
                   
-                  <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 nav-menu-item">
+                  <button 
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 nav-menu-item touch-manipulation"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <svg className="w-4 h-4 nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span>Ayuda</span>
                   </button>
                   
-                  <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 nav-menu-item">
+                  <button 
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 nav-menu-item touch-manipulation"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <svg className="w-4 h-4 nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
                     </svg>
@@ -214,8 +252,11 @@ const Navigation = () => {
                 
                 <div className="border-t border-gray-100 py-1">
                   <button 
-                    onClick={handleLogoutClick}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-3 nav-menu-item"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLogoutClick();
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-3 nav-menu-item touch-manipulation"
                   >
                     <svg className="w-4 h-4 nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
