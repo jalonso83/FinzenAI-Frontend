@@ -721,7 +721,10 @@ const CategoryReport: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribución por Categorías</h3>
-              <PieChart data={reportData.categoryData} />
+              <PieChart 
+                data={reportData.categoryData} 
+                type={activeTab === 'income' ? 'INCOME' : 'EXPENSE'}
+              />
             </div>
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

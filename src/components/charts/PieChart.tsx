@@ -26,9 +26,10 @@ interface CategoryData {
 interface PieChartProps {
   data: CategoryData[];
   title?: string;
+  type?: 'INCOME' | 'EXPENSE';
 }
 
-const PieChart: React.FC<PieChartProps> = ({ data, title = "Distribución por Categorías" }) => {
+const PieChart: React.FC<PieChartProps> = ({ data, title = "Distribución por Categorías", type }) => {
   console.log('PieChart data received:', data);
   
   if (!data || data.length === 0) {
@@ -45,12 +46,25 @@ const PieChart: React.FC<PieChartProps> = ({ data, title = "Distribución por Ca
 
   // Generar colores únicos para cada categoría
   const generateColors = (count: number) => {
-    const colors = [
-      '#EF4444', '#F97316', '#F59E0B', '#EAB308', '#84CC16',
-      '#22C55E', '#10B981', '#14B8A6', '#06B6D4', '#0EA5E9',
-      '#3B82F6', '#6366F1', '#8B5CF6', '#A855F7', '#D946EF',
-      '#EC4899', '#F43F5E', '#FB7185', '#FD6C6C', '#FE9595'
-    ];
+    // Detectar el tipo basado en los datos si no se proporciona
+    const detectedType = type || (data.length > 0 && data[0].type === 'INCOME' ? 'INCOME' : 'EXPENSE');
+    
+    let colors;
+    if (detectedType === 'INCOME') {
+      // Colores verdes y azules para ingresos
+      colors = [
+        '#10B981', '#22C55E', '#16A34A', '#15803D', '#14B8A6',
+        '#0D9488', '#06B6D4', '#0EA5E9', '#0284C7', '#0369A1',
+        '#84CC16', '#65A30D', '#059669', '#047857', '#0F766E'
+      ];
+    } else {
+      // Colores rojos y naranjas para gastos  
+      colors = [
+        '#EF4444', '#DC2626', '#B91C1C', '#991B1B', '#F97316',
+        '#EA580C', '#C2410C', '#9A3412', '#F59E0B', '#D97706',
+        '#B45309', '#92400E', '#EAB308', '#CA8A04', '#A16207'
+      ];
+    }
     
     const result = [];
     for (let i = 0; i < count; i++) {

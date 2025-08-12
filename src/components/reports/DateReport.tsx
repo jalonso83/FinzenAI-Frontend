@@ -538,13 +538,15 @@ const DateReport: React.FC = () => {
                       <div className="w-16 text-sm text-gray-600 font-medium">
                         {getWeekdayName(index).slice(0, 3)}
                       </div>
-                      <div className="flex-1 bg-gray-200 rounded-full h-6 relative">
+                      <div className="flex-1 bg-gray-200 rounded-full h-8 relative">
                         <div 
-                          className="bg-gradient-to-r from-blue-500 to-purple-600 h-6 rounded-full transition-all duration-500"
+                          className="bg-gradient-to-r from-blue-500 to-purple-600 h-8 rounded-full transition-all duration-500"
                           style={{ width: `${percentage}%` }}
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-xs font-medium text-white">
+                          <span className={`text-xs font-bold ${
+                            percentage > 30 ? 'text-white drop-shadow-sm' : 'text-gray-700'
+                          }`}>
                             {formatCurrency(amount)}
                           </span>
                         </div>
