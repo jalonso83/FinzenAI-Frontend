@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import isotipo from '../assets/isotipo.png';
 import api from '../utils/api';
-import { Send } from 'lucide-react';
+import { Send, Mic, MicOff, StopCircle, RotateCcw } from 'lucide-react';
 import { useCategoriesStore } from '../stores/categories';
 
 interface ZenioChatProps {
@@ -37,6 +37,15 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 3;
 
+  // Estados para funcionalidad de audio
+  const [isRecording, setIsRecording] = useState(false);
+  const [isProcessingAudio, setIsProcessingAudio] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [isAudioSupported, setIsAudioSupported] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // Obtener categorías del store
   const { categories, fetchCategories } = useCategoriesStore();
 
@@ -44,6 +53,102 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
+
+  // Inicializar Web Speech API
+  useEffect(() => {
+    const initializeSpeechRecognition = () => {
+      // Verificar soporte del navegador para Web Speech API
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      
+      if (SpeechRecognition) {
+        setIsAudioSupported(true);
+        
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'es-DO'; // Español dominicano
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        
+        recognition.onstart = () => {
+          setIsRecording(true);
+          setIsProcessingAudio(false);
+          setVoiceError(null);
+          setRecordingTime(0);
+          
+          // Iniciar timer
+          recordingTimerRef.current = setInterval(() => {
+            setRecordingTime(prev => prev + 1);
+          }, 1000);
+        };
+        
+        recognition.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          const confidence = event.results[0][0].confidence;
+          
+          console.log('🎤 Transcripción:', transcript, 'Confianza:', confidence);
+          
+          // Si la confianza es muy baja, mostrar advertencia
+          if (confidence < 0.5) {
+            setVoiceError('Transcripción poco clara. ¿Puedes repetir?');
+          }
+          
+          // Llenar el input con la transcripción
+          setInput(transcript.trim());
+          setIsProcessingAudio(false);
+        };
+        
+        recognition.onerror = (event: any) => {
+          console.error('❌ Error en reconocimiento de voz:', event.error);
+          
+          let errorMessage = 'Error al procesar el audio';
+          switch (event.error) {
+            case 'not-allowed':
+              errorMessage = 'Permisos de micrófono denegados';
+              break;
+            case 'no-speech':
+              errorMessage = 'No se detectó voz. Intenta de nuevo';
+              break;
+            case 'audio-capture':
+              errorMessage = 'No se pudo acceder al micrófono';
+              break;
+            case 'network':
+              errorMessage = 'Error de conexión. Verifica tu internet';
+              break;
+          }
+          
+          setVoiceError(errorMessage);
+          setIsProcessingAudio(false);
+        };
+        
+        recognition.onend = () => {
+          setIsRecording(false);
+          if (recordingTimerRef.current) {
+            clearInterval(recordingTimerRef.current);
+            recordingTimerRef.current = null;
+          }
+          
+          // Si no hubo error y no hay texto, mostrar procesando
+          if (!voiceError && !input) {
+            setIsProcessingAudio(true);
+          }
+        };
+        
+        recognitionRef.current = recognition;
+      } else {
+        console.warn('⚠️ Web Speech API no soportado en este navegador');
+        setIsAudioSupported(false);
+      }
+    };
+    
+    initializeSpeechRecognition();
+    
+    // Cleanup
+    return () => {
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+    };
+  }, []);
 
   // Auto-inicializar conversación para modal (no onboarding)
   useEffect(() => {
@@ -249,6 +354,54 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
     }
   };
 
+  // Funciones para manejo de audio
+  const startVoiceRecording = () => {
+    if (!recognitionRef.current || !isAudioSupported) return;
+    
+    try {
+      setVoiceError(null);
+      recognitionRef.current.start();
+    } catch (error) {
+      console.error('❌ Error al iniciar grabación:', error);
+      setVoiceError('Error al iniciar la grabación');
+    }
+  };
+
+  const stopVoiceRecording = () => {
+    if (!recognitionRef.current) return;
+    
+    try {
+      recognitionRef.current.stop();
+    } catch (error) {
+      console.error('❌ Error al detener grabación:', error);
+    }
+  };
+
+  const cancelVoiceRecording = () => {
+    if (!recognitionRef.current) return;
+    
+    try {
+      recognitionRef.current.abort();
+      setInput(''); // Limpiar cualquier transcripción parcial
+      setVoiceError(null);
+      setIsProcessingAudio(false);
+    } catch (error) {
+      console.error('❌ Error al cancelar grabación:', error);
+    }
+  };
+
+  const retryVoiceRecording = () => {
+    setVoiceError(null);
+    setInput('');
+    startVoiceRecording();
+  };
+
+  const formatRecordingTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || submitting) return;
@@ -288,26 +441,112 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
           </div>
         ))}
       </div>
+      {/* Voice Error Message */}
+      {voiceError && (
+        <div className="px-6 py-2 bg-red-50 border-t border-red-200">
+          <div className="flex items-center justify-between">
+            <span className="text-red-600 text-sm">❌ {voiceError}</span>
+            <button
+              onClick={retryVoiceRecording}
+              className="text-red-600 hover:text-red-800 p-1"
+              aria-label="Reintentar grabación"
+            >
+              <RotateCcw size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Recording Status */}
+      {(isRecording || isProcessingAudio) && (
+        <div className="px-6 py-2 bg-blue-50 border-t border-blue-200">
+          <div className="flex items-center justify-center gap-2">
+            {isRecording && (
+              <>
+                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                <span className="text-blue-700 text-sm font-medium">
+                  Grabando... {formatRecordingTime(recordingTime)}
+                </span>
+              </>
+            )}
+            {isProcessingAudio && (
+              <>
+                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-blue-700 text-sm font-medium">Transcribiendo...</span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Input */}
-      <form onSubmit={handleSend} className="flex gap-2 px-6 py-4 border-t border-border bg-white rounded-b-2xl">
-        <input
-          type="text"
-          className="flex-1 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-          placeholder={submitting ? 'Zenio está procesando...' : 'Escribe tu mensaje...'}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          disabled={submitting}
-          readOnly={submitting}
-        />
-        <button
-          type="submit"
-          className="px-6 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-secondary transition disabled:opacity-50 flex items-center justify-center"
-          disabled={submitting || !input.trim()}
-          aria-label="Enviar mensaje"
-        >
-          <Send size={20} />
-        </button>
-      </form>
+      <div className="px-6 py-4 border-t border-border bg-white rounded-b-2xl">
+        {/* Recording Controls */}
+        {isRecording && (
+          <div className="flex gap-2 mb-3 justify-center">
+            <button
+              type="button"
+              onClick={stopVoiceRecording}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition flex items-center gap-2"
+            >
+              <StopCircle size={18} />
+              Detener
+            </button>
+            <button
+              type="button"
+              onClick={cancelVoiceRecording}
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg font-medium hover:bg-gray-600 transition"
+            >
+              Cancelar
+            </button>
+          </div>
+        )}
+        
+        <form onSubmit={handleSend} className="flex gap-2">
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary pr-12"
+              placeholder={
+                submitting ? 'Zenio está procesando...' : 
+                isRecording ? 'Escuchando...' :
+                isProcessingAudio ? 'Transcribiendo...' :
+                'Escribe o habla tu mensaje...'
+              }
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              disabled={submitting || isRecording || isProcessingAudio}
+              readOnly={submitting || isRecording || isProcessingAudio}
+            />
+            
+            {/* Microphone Button */}
+            {isAudioSupported && (
+              <button
+                type="button"
+                onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
+                className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-lg transition ${
+                  isRecording 
+                    ? 'bg-red-500 text-white hover:bg-red-600' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                } disabled:opacity-50`}
+                disabled={submitting || isProcessingAudio}
+                aria-label={isRecording ? 'Detener grabación' : 'Iniciar grabación de voz'}
+              >
+                {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
+              </button>
+            )}
+          </div>
+          
+          <button
+            type="submit"
+            className="px-6 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-secondary transition disabled:opacity-50 flex items-center justify-center"
+            disabled={submitting || !input.trim() || isRecording || isProcessingAudio}
+            aria-label="Enviar mensaje"
+          >
+            <Send size={20} />
+          </button>
+        </form>
+      </div>
     </div>
   );
 };
