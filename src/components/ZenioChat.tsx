@@ -87,14 +87,19 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
           
           console.log('🎤 Transcripción:', transcript, 'Confianza:', confidence);
           
-          // Si la confianza es muy baja, mostrar advertencia
-          if (confidence < 0.5) {
-            setVoiceError('Transcripción poco clara. ¿Puedes repetir?');
-          }
-          
           // Llenar el input con la transcripción
           setInput(transcript.trim());
+          
+          // Si la confianza es muy baja, mostrar advertencia pero mantener el texto
+          if (confidence < 0.5) {
+            setVoiceError('Transcripción poco clara. Puedes editarla antes de enviar.');
+          } else {
+            setVoiceError(null);
+          }
+          
+          // Detener procesamiento
           setIsProcessingAudio(false);
+          setIsRecording(false);
         };
         
         recognition.onerror = (event: any) => {
@@ -122,14 +127,10 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         
         recognition.onend = () => {
           setIsRecording(false);
+          setIsProcessingAudio(false); // Siempre detener el procesamiento
           if (recordingTimerRef.current) {
             window.clearInterval(recordingTimerRef.current);
             recordingTimerRef.current = null;
-          }
-          
-          // Si no hubo error y no hay texto, mostrar procesando
-          if (!voiceError && !input) {
-            setIsProcessingAudio(true);
           }
         };
         
