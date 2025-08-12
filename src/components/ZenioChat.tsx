@@ -64,10 +64,16 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         setIsAudioSupported(true);
         
         const recognition = new SpeechRecognition();
-        recognition.lang = 'es-DO'; // Español dominicano
+        recognition.lang = 'es-ES'; // Cambiar a español general (mejor compatibilidad)
         recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
+        recognition.interimResults = true; // Permitir resultados intermedios
+        recognition.maxAlternatives = 3; // Más alternativas
+        
+        // Configurar timeout más largo para dar más tiempo
+        if ('webkitSpeechRecognition' in window) {
+          // Configuraciones específicas de Chrome
+          (recognition as any).serviceURI = undefined; // Usar servicio por defecto
+        }
         
         recognition.onstart = () => {
           setIsRecording(true);
@@ -82,24 +88,38 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         };
         
         recognition.onresult = (event: any) => {
-          const transcript = event.results[0][0].transcript;
-          const confidence = event.results[0][0].confidence;
+          console.log('🎤 Resultados recibidos:', event.results.length);
           
-          console.log('🎤 Transcripción:', transcript, 'Confianza:', confidence);
+          let finalTranscript = '';
+          let interimTranscript = '';
           
-          // Llenar el input con la transcripción
-          setInput(transcript.trim());
-          
-          // Si la confianza es muy baja, mostrar advertencia pero mantener el texto
-          if (confidence < 0.5) {
-            setVoiceError('Transcripción poco clara. Puedes editarla antes de enviar.');
-          } else {
-            setVoiceError(null);
+          // Procesar todos los resultados
+          for (let i = 0; i < event.results.length; i++) {
+            const result = event.results[i];
+            const transcript = result[0].transcript;
+            
+            if (result.isFinal) {
+              finalTranscript += transcript;
+              console.log('🎤 Transcripción final:', transcript, 'Confianza:', result[0].confidence);
+            } else {
+              interimTranscript += transcript;
+              console.log('🎤 Transcripción intermedia:', transcript);
+            }
           }
           
-          // Detener procesamiento
-          setIsProcessingAudio(false);
-          setIsRecording(false);
+          // Usar transcripción final si existe, sino la intermedia
+          const textToUse = finalTranscript || interimTranscript;
+          
+          if (textToUse.trim()) {
+            setInput(textToUse.trim());
+            setVoiceError(null);
+            
+            // Si es resultado final, detener completamente
+            if (finalTranscript) {
+              setIsProcessingAudio(false);
+              setIsRecording(false);
+            }
+          }
         };
         
         recognition.onerror = (event: any) => {
@@ -108,24 +128,50 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
           let errorMessage = 'Error al procesar el audio';
           switch (event.error) {
             case 'not-allowed':
-              errorMessage = 'Permisos de micrófono denegados';
+              errorMessage = 'Permisos de micrófono denegados. Habilítalos en tu navegador.';
               break;
             case 'no-speech':
-              errorMessage = 'No se detectó voz. Intenta de nuevo';
+              errorMessage = 'No se detectó voz. Habla más fuerte y cerca del micrófono.';
               break;
             case 'audio-capture':
-              errorMessage = 'No se pudo acceder al micrófono';
+              errorMessage = 'No se pudo acceder al micrófono. Verifica que esté conectado.';
               break;
             case 'network':
-              errorMessage = 'Error de conexión. Verifica tu internet';
+              errorMessage = 'Error de conexión. Verifica tu internet y intenta de nuevo.';
               break;
+            case 'aborted':
+              errorMessage = ''; // No mostrar error si fue cancelado por el usuario
+              break;
+            default:
+              errorMessage = `Error desconocido: ${event.error}. Intenta de nuevo.`;
           }
           
-          setVoiceError(errorMessage);
+          if (errorMessage && errorMessage.trim()) {
+            setVoiceError(errorMessage);
+          }
           setIsProcessingAudio(false);
+          setIsRecording(false);
         };
         
+        // Eventos adicionales para debugging
+        recognition.onspeechstart = () => {
+          console.log('🎤 Voz detectada - empezando a grabar');
+        };
+        
+        recognition.onspeechend = () => {
+          console.log('🎤 Voz terminada - procesando');
+        };
+        
+        recognition.onsoundstart = () => {
+          console.log('🎤 Sonido detectado');
+        };
+        
+        recognition.onsoundend = () => {
+          console.log('🎤 Sonido terminado');
+        };
+
         recognition.onend = () => {
+          console.log('🎤 Reconocimiento terminado');
           setIsRecording(false);
           setIsProcessingAudio(false); // Siempre detener el procesamiento
           if (recordingTimerRef.current) {
