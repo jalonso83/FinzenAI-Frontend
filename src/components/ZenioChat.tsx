@@ -44,7 +44,7 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
   const [recordingTime, setRecordingTime] = useState(0);
   const [isAudioSupported, setIsAudioSupported] = useState(false);
   const recognitionRef = useRef<any>(null);
-  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const recordingTimerRef = useRef<number | null>(null);
 
   // Obtener categorías del store
   const { categories, fetchCategories } = useCategoriesStore();
@@ -76,7 +76,7 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
           setRecordingTime(0);
           
           // Iniciar timer
-          recordingTimerRef.current = setInterval(() => {
+          recordingTimerRef.current = window.setInterval(() => {
             setRecordingTime(prev => prev + 1);
           }, 1000);
         };
@@ -123,7 +123,7 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         recognition.onend = () => {
           setIsRecording(false);
           if (recordingTimerRef.current) {
-            clearInterval(recordingTimerRef.current);
+            window.clearInterval(recordingTimerRef.current);
             recordingTimerRef.current = null;
           }
           
@@ -145,7 +145,7 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
     // Cleanup
     return () => {
       if (recordingTimerRef.current) {
-        clearInterval(recordingTimerRef.current);
+        window.clearInterval(recordingTimerRef.current);
       }
     };
   }, []);
