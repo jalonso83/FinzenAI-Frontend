@@ -507,7 +507,19 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
   };
 
   const stopVoiceRecording = () => {
-    if (!recognitionRef.current) return;
+    console.log('🎤 ⚠️ STOP LLAMADO - Estado actual:', {
+      isRecording,
+      isProcessingAudio,
+      hasRecognition: !!recognitionRef.current
+    });
+    
+    // Agregar stack trace para ver desde dónde se llama
+    console.trace('🎤 Stack trace de stopVoiceRecording:');
+    
+    if (!recognitionRef.current) {
+      console.log('🎤 ❌ No hay referencia de reconocimiento para detener');
+      return;
+    }
     
     try {
       console.log('🎤 Deteniendo grabación manualmente...');
@@ -670,7 +682,17 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
             {isAudioSupported && (
               <button
                 type="button"
-                onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
+                onClick={(e) => {
+                  e.preventDefault();
+                  console.log('🎤 👆 Click en botón micrófono - isRecording:', isRecording);
+                  if (isRecording) {
+                    console.log('🎤 👆 Llamando stopVoiceRecording desde botón');
+                    stopVoiceRecording();
+                  } else {
+                    console.log('🎤 👆 Llamando startVoiceRecording desde botón');
+                    startVoiceRecording();
+                  }
+                }}
                 className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-lg transition ${
                   isRecording 
                     ? 'bg-red-500 text-white hover:bg-red-600' 
