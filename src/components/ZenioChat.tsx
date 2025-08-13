@@ -473,35 +473,76 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
   // Verificar permisos de micrófono y nivel de audio
   const checkMicrophonePermissions = async () => {
     try {
+      // Primero obtener lista de dispositivos
+      console.log('🎤 📋 Obteniendo lista de dispositivos...');
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const audioInputs = devices.filter(device => device.kind === 'audioinput');
+      
+      console.log('🎤 🎧 Dispositivos de audio encontrados:', audioInputs.map(d => ({
+        deviceId: d.deviceId,
+        label: d.label || 'Micrófono desconocido'
+      })));
+      
+      // Intentar con configuración básica primero
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          sampleRate: 44100
-        }
+        audio: true  // Configuración básica sin restricciones adicionales
       });
       
       console.log('🎤 ✅ Permisos de micrófono concedidos');
+      console.log('🎤 🎚️ Stream obtenido:', stream.getTracks().map(track => ({
+        kind: track.kind,
+        label: track.label,
+        enabled: track.enabled,
+        muted: track.muted,
+        readyState: track.readyState
+      })));
       
-      // Verificar nivel de audio brevemente
+      // Verificar nivel de audio con tiempo extendido
       const audioContext = new AudioContext();
       const analyser = audioContext.createAnalyser();
       const microphone = audioContext.createMediaStreamSource(stream);
       microphone.connect(analyser);
       
+      analyser.fftSize = 256;
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
-      analyser.getByteFrequencyData(dataArray);
-      const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-      console.log('🎤 🔊 Nivel de audio detectado:', average);
       
-      // Limpiar recursos
-      microphone.disconnect();
-      audioContext.close();
-      stream.getTracks().forEach(track => track.stop());
+      // Tomar múltiples muestras durante 2 segundos
+      console.log('🎤 🔍 Analizando nivel de audio por 2 segundos... ¡HABLA AHORA!');
+      let maxLevel = 0;
+      let samples = 0;
       
-      if (average < 5) {
-        console.log('🎤 ⚠️ Nivel de audio muy bajo, pero continuando...');
-      }
+      const checkAudio = () => {
+        analyser.getByteFrequencyData(dataArray);
+        const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+        const peak = Math.max(...Array.from(dataArray));
+        
+        if (average > maxLevel) maxLevel = average;
+        samples++;
+        
+        console.log(`🎤 📊 Muestra ${samples}: promedio=${average.toFixed(1)}, pico=${peak}`);
+        
+        if (samples < 20) { // 20 muestras durante ~2 segundos
+          setTimeout(checkAudio, 100);
+        } else {
+          // Limpiar recursos
+          microphone.disconnect();
+          audioContext.close();
+          stream.getTracks().forEach(track => track.stop());
+          
+          console.log('🎤 🎯 Nivel máximo detectado:', maxLevel);
+          
+          if (maxLevel < 1) {
+            console.log('🎤 ❌ Sin actividad de audio detectada');
+            setVoiceError('El micrófono no parece estar funcionando. Verifica que no esté silenciado y que otras aplicaciones no lo estén usando.');
+          } else if (maxLevel < 5) {
+            console.log('🎤 ⚠️ Nivel de audio muy bajo');
+          } else {
+            console.log('🎤 ✅ Nivel de audio adecuado');
+          }
+        }
+      };
+      
+      checkAudio();
       
       return true;
     } catch (error) {
