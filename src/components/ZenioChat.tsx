@@ -743,6 +743,22 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
           </div>
         ))}
       </div>
+      {/* Audio Compatibility Notice */}
+      {isAudioSupported && (
+        <div className="px-6 py-2 bg-green-50 border-t border-green-200">
+          <div className="flex items-start gap-2">
+            <div className="text-green-600 mt-0.5">🎤</div>
+            <div className="text-green-800 text-sm">
+              <div className="font-medium">Funcionalidad de voz activada</div>
+              <div className="text-xs mt-1 text-green-600">
+                ✅ Si conectas auriculares Bluetooth, deberían funcionar mejor con el reconocimiento de voz.
+                💡 Consejo: Habla inmediatamente después de presionar el micrófono.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Voice Error Message */}
       {voiceError && (
         <div className="px-6 py-2 bg-red-50 border-t border-red-200">
