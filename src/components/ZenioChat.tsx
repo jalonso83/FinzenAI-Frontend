@@ -76,6 +76,7 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         }
         
         recognition.onstart = () => {
+          console.log('🎤 Reconocimiento iniciado');
           setIsRecording(true);
           setIsProcessingAudio(false);
           setVoiceError(null);
@@ -88,44 +89,71 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         };
         
         recognition.onresult = (event: any) => {
-          console.log('🎤 Resultados recibidos:', event.results.length);
+          console.log('🎤 ===== EVENTO ONRESULT EJECUTADO =====');
+          console.log('🎤 Número de resultados:', event.results.length);
           
           let finalTranscript = '';
           let interimTranscript = '';
+          let hasValidResult = false;
           
           // Procesar todos los resultados
           for (let i = 0; i < event.results.length; i++) {
             const result = event.results[i];
             const transcript = result[0].transcript;
+            const confidence = result[0].confidence;
+            
+            console.log(`🎤 Resultado ${i}:`, {
+              transcript: transcript,
+              isFinal: result.isFinal,
+              confidence: confidence
+            });
             
             if (result.isFinal) {
               finalTranscript += transcript;
-              console.log('🎤 Transcripción final:', transcript, 'Confianza:', result[0].confidence);
+              hasValidResult = true;
+              console.log('🎤 ✅ Transcripción FINAL encontrada:', transcript);
             } else {
               interimTranscript += transcript;
-              console.log('🎤 Transcripción intermedia:', transcript);
+              hasValidResult = true;
+              console.log('🎤 ⏳ Transcripción INTERMEDIA:', transcript);
             }
           }
           
           // Usar transcripción final si existe, sino la intermedia para mostrar progreso
           const textToUse = finalTranscript || interimTranscript;
           
-          if (textToUse.trim()) {
-            console.log('🎤 Estableciendo texto en input:', textToUse.trim());
-            setInput(textToUse.trim());
+          console.log('🎤 Texto a usar:', textToUse);
+          console.log('🎤 ¿Tiene contenido?', !!textToUse.trim());
+          
+          if (textToUse && textToUse.trim()) {
+            console.log('🎤 ✅ ESTABLECIENDO TEXTO EN INPUT:', textToUse.trim());
+            setInput(prev => {
+              console.log('🎤 Input anterior:', prev);
+              console.log('🎤 Input nuevo:', textToUse.trim());
+              return textToUse.trim();
+            });
             setVoiceError(null);
             
             // Solo si hay resultado final, marcar como completado
             if (finalTranscript && finalTranscript.trim()) {
-              console.log('🎤 Resultado final detectado, deteniendo reconocimiento');
+              console.log('🎤 ✅ Resultado final detectado, deteniendo procesamiento');
               setIsProcessingAudio(false);
-              // No establecer isRecording a false aquí, dejar que onend lo maneje
             }
+          } else {
+            console.log('🎤 ❌ No hay texto válido para establecer');
           }
+          
+          if (!hasValidResult) {
+            console.log('🎤 ⚠️ No se encontraron resultados válidos');
+          }
+          
+          console.log('🎤 ===== FIN EVENTO ONRESULT =====');
         };
         
         recognition.onerror = (event: any) => {
-          console.error('❌ Error en reconocimiento de voz:', event.error);
+          console.error('❌ ===== ERROR EN RECONOCIMIENTO =====');
+          console.error('❌ Tipo de error:', event.error);
+          console.error('❌ Evento completo:', event);
           
           let errorMessage = 'Error al procesar el audio';
           switch (event.error) {
@@ -134,6 +162,7 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
               break;
             case 'no-speech':
               errorMessage = 'No se detectó voz. Habla más fuerte y cerca del micrófono.';
+              console.log('🎤 ⚠️ Error no-speech - puede ser que no se detectó voz clara');
               break;
             case 'audio-capture':
               errorMessage = 'No se pudo acceder al micrófono. Verifica que esté conectado.';
@@ -143,6 +172,7 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
               break;
             case 'aborted':
               errorMessage = ''; // No mostrar error si fue cancelado por el usuario
+              console.log('🎤 ℹ️ Reconocimiento cancelado por el usuario');
               break;
             default:
               errorMessage = `Error desconocido: ${event.error}. Intenta de nuevo.`;
@@ -150,9 +180,11 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
           
           if (errorMessage && errorMessage.trim()) {
             setVoiceError(errorMessage);
+            console.error('❌ Estableciendo mensaje de error:', errorMessage);
           }
           setIsProcessingAudio(false);
           setIsRecording(false);
+          console.error('❌ ===== FIN ERROR =====');
         };
         
         // Eventos adicionales para debugging
