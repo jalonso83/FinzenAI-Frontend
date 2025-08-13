@@ -79,12 +79,11 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
           
           // Intentar configuraciones adicionales para mejor detección
           try {
-            (recognition as any).audioTrack = true;
-            (recognition as any).grammars = undefined;
             // Configurar para usar micrófono específico si está disponible
             if (window.navigator.mediaDevices) {
               console.log('🎤 🔧 MediaDevices disponible para configuraciones avanzadas');
             }
+            console.log('🎤 ✅ Configuraciones WebKit aplicadas correctamente');
           } catch (e) {
             console.log('🎤 No se pudieron aplicar configuraciones adicionales:', e);
           }
