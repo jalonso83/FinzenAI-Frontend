@@ -46,6 +46,7 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
   const recognitionRef = useRef<any>(null);
   const recordingTimerRef = useRef<number | null>(null);
   const timeoutRef = useRef<number | null>(null);
+  const workingMicrophoneRef = useRef<string | null>(null);
 
   // Obtener categorías del store
   const { categories, fetchCategories } = useCategoriesStore();
@@ -72,14 +73,20 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         
         // Configuraciones específicas del navegador para mejorar sensibilidad
         if ('webkitSpeechRecognition' in window) {
+          console.log('🎤 🔧 Aplicando configuraciones WebKit...');
           // Configuraciones específicas de Chrome/WebKit
           (recognition as any).serviceURI = undefined;
+          
           // Intentar configuraciones adicionales para mejor detección
           try {
             (recognition as any).audioTrack = true;
             (recognition as any).grammars = undefined;
+            // Configurar para usar micrófono específico si está disponible
+            if (window.navigator.mediaDevices) {
+              console.log('🎤 🔧 MediaDevices disponible para configuraciones avanzadas');
+            }
           } catch (e) {
-            console.log('🎤 No se pudieron aplicar configuraciones adicionales');
+            console.log('🎤 No se pudieron aplicar configuraciones adicionales:', e);
           }
         }
         
@@ -483,12 +490,40 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         label: d.label || 'Micrófono desconocido'
       })));
       
-      // Intentar con configuración básica primero
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: true  // Configuración básica sin restricciones adicionales
-      });
+      // Probar con diferentes micrófonos hasta encontrar uno que funcione
+      let workingDeviceId = null;
+      let stream = null;
       
-      console.log('🎤 ✅ Permisos de micrófono concedidos');
+      // Primero intentar con configuración por defecto
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: true
+        });
+        console.log('🎤 ✅ Permisos concedidos con dispositivo por defecto');
+      } catch (error) {
+        console.log('🎤 ⚠️ Dispositivo por defecto falló, probando específicos...');
+      }
+      
+      // Si no funciona, probar con cada micrófono específico
+      if (!stream) {
+        for (const device of audioInputs) {
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              audio: { deviceId: { exact: device.deviceId } }
+            });
+            workingDeviceId = device.deviceId;
+            console.log(`🎤 ✅ Micrófono específico funcionando: ${device.label}`);
+            break;
+          } catch (error) {
+            console.log(`🎤 ❌ Falló micrófono: ${device.label}`);
+          }
+        }
+      }
+      
+      if (!stream) {
+        throw new Error('No se pudo acceder a ningún micrófono');
+      }
+      
       console.log('🎤 🎚️ Stream obtenido:', stream.getTracks().map(track => ({
         kind: track.kind,
         label: track.label,
@@ -536,8 +571,11 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
             setVoiceError('El micrófono no parece estar funcionando. Verifica que no esté silenciado y que otras aplicaciones no lo estén usando.');
           } else if (maxLevel < 5) {
             console.log('🎤 ⚠️ Nivel de audio muy bajo');
+            workingMicrophoneRef.current = workingDeviceId; // Guardar micrófono que funciona
           } else {
             console.log('🎤 ✅ Nivel de audio adecuado');
+            workingMicrophoneRef.current = workingDeviceId; // Guardar micrófono que funciona
+            console.log('🎤 💾 Micrófono guardado para Speech API:', workingDeviceId);
           }
         }
       };
@@ -566,15 +604,35 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         return;
       }
       
-      // Timeout de 8 segundos para detectar si no hay resultados
+      console.log('🎤 🚀 Iniciando Web Speech Recognition...');
+      console.log('🎤 📍 Micrófono de trabajo guardado:', workingMicrophoneRef.current);
+      
+      // Si tenemos un micrófono específico que funciona, intentar configurarlo como predeterminado
+      if (workingMicrophoneRef.current && navigator.mediaDevices) {
+        try {
+          console.log('🎤 🔄 Intentando pre-configurar micrófono específico...');
+          // Hacer una llamada rápida para "activar" el micrófono específico
+          const testStream = await navigator.mediaDevices.getUserMedia({
+            audio: { deviceId: workingMicrophoneRef.current }
+          });
+          // Cerrar inmediatamente
+          testStream.getTracks().forEach(track => track.stop());
+          console.log('🎤 ✅ Micrófono específico pre-configurado');
+        } catch (error) {
+          console.log('🎤 ⚠️ No se pudo pre-configurar micrófono específico:', error);
+        }
+      }
+      
+      // Timeout de 10 segundos (un poco más tiempo)
       timeoutRef.current = window.setTimeout(() => {
         console.log('🎤 ⏰ Timeout alcanzado - deteniendo reconocimiento');
         if (recognitionRef.current && isRecording) {
           recognitionRef.current.stop();
           setVoiceError('Timeout: No se detectó voz. Habla más fuerte y intenta de nuevo.');
         }
-      }, 8000);
+      }, 10000);
       
+      console.log('🎤 🎯 Lanzando recognition.start()...');
       recognitionRef.current.start();
     } catch (error) {
       console.error('❌ Error al iniciar grabación:', error);
