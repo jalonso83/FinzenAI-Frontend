@@ -85,12 +85,13 @@ const LineChart: React.FC<LineChartProps> = ({ data, title = "Tendencias Mensual
       return specialColors[categoryName];
     }
 
-    // Colores fallback para otras categorías
+    // Colores fallback para otras categorías - priorizar verdes primero
     const fallbackColors = [
-      '#F97316', '#F59E0B', '#EAB308', '#84CC16',
-      '#10B981', '#14B8A6', '#06B6D4', '#6366F1', 
-      '#8B5CF6', '#A855F7', '#D946EF', '#EC4899', 
-      '#F43F5E', '#FB7185', '#FD6C6C', '#FE9595'
+      '#10B981', '#22C55E', '#16A34A', '#15803D',  // Verdes primero
+      '#14B8A6', '#0D9488', '#06B6D4', '#0EA5E9', // Azules-verdes
+      '#84CC16', '#65A30D', '#059669', '#047857',  // Más verdes  
+      '#0F766E', '#3B82F6', '#6366F1', '#8B5CF6', // Azules/morados
+      '#A855F7', '#D946EF', '#EC4899', '#F43F5E'  // Otros colores
     ];
     
     return fallbackColors[index % fallbackColors.length];
