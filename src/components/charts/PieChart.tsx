@@ -51,18 +51,18 @@ const PieChart: React.FC<PieChartProps> = ({ data, title = "Distribución por Ca
     
     let colors;
     if (detectedType === 'INCOME') {
-      // Colores verdes y azules para ingresos
+      // Gama de verdes variados para ingresos - empezar con verde principal y variar
       colors = [
-        '#10B981', '#22C55E', '#16A34A', '#15803D', '#14B8A6',
-        '#0D9488', '#06B6D4', '#0EA5E9', '#0284C7', '#0369A1',
-        '#84CC16', '#65A30D', '#059669', '#047857', '#0F766E'
+        '#10B981', '#22C55E', '#16A34A', '#15803D', '#059669', 
+        '#047857', '#065F46', '#14B8A6', '#0D9488', '#0F766E',
+        '#06B6D4', '#0EA5E9', '#0284C7', '#84CC16', '#65A30D'
       ];
     } else {
-      // Colores rojos y naranjas para gastos  
+      // Gama de rojos variados para gastos - empezar con rojo principal y variar
       colors = [
-        '#EF4444', '#DC2626', '#B91C1C', '#991B1B', '#F97316',
-        '#EA580C', '#C2410C', '#9A3412', '#F59E0B', '#D97706',
-        '#B45309', '#92400E', '#EAB308', '#CA8A04', '#A16207'
+        '#EF4444', '#DC2626', '#B91C1C', '#991B1B', '#7F1D1D',
+        '#F87171', '#FCA5A5', '#FEE2E2', '#F97316', '#EA580C', 
+        '#C2410C', '#9A3412', '#F59E0B', '#D97706', '#B45309'
       ];
     }
     
