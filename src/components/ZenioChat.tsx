@@ -66,10 +66,12 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         setIsAudioSupported(true);
         
         const recognition = new SpeechRecognition();
-        recognition.lang = 'es-ES'; // Español general
-        recognition.continuous = false; // Cambiar de vuelta a false para evitar timeout prematuro
-        recognition.interimResults = true; // Permitir resultados intermedios
-        recognition.maxAlternatives = 1; // Reducir a 1 para mejor rendimiento
+        
+        // Configuración optimizada para Chrome con Realtek Audio
+        recognition.lang = 'es-ES';
+        recognition.continuous = true; // Cambiar a true para mantener la sesión
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 3; // Más alternativas para mejor detección
         
         // Configuraciones específicas del navegador para mejorar sensibilidad
         if ('webkitSpeechRecognition' in window) {
@@ -110,10 +112,10 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
           let interimTranscript = '';
           let hasValidResult = false;
           
-          // Procesar todos los resultados
-          for (let i = 0; i < event.results.length; i++) {
+          // Procesar todos los resultados desde el último índice procesado
+          for (let i = event.resultIndex; i < event.results.length; i++) {
             const result = event.results[i];
-            const transcript = result[0].transcript;
+            const transcript = result[0].transcript.trim();
             const confidence = result[0].confidence;
             
             console.log(`🎤 Resultado ${i}:`, {
@@ -122,43 +124,39 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
               confidence: confidence
             });
             
-            if (result.isFinal) {
-              finalTranscript += transcript;
+            if (result.isFinal && transcript) {
+              finalTranscript += transcript + ' ';
               hasValidResult = true;
               console.log('🎤 ✅ Transcripción FINAL encontrada:', transcript);
-            } else {
-              interimTranscript += transcript;
+              
+              // Con continuous=true, detener manualmente cuando tengamos resultado final
+              console.log('🎤 🛑 Deteniendo reconocimiento después de resultado final');
+              if (recognitionRef.current) {
+                recognitionRef.current.stop();
+              }
+            } else if (transcript) {
+              interimTranscript += transcript + ' ';
               hasValidResult = true;
               console.log('🎤 ⏳ Transcripción INTERMEDIA:', transcript);
             }
           }
           
-          // Usar transcripción final si existe, sino la intermedia para mostrar progreso
-          const textToUse = finalTranscript || interimTranscript;
+          // Usar transcripción final si existe, sino la intermedia
+          const textToUse = (finalTranscript || interimTranscript).trim();
           
           console.log('🎤 Texto a usar:', textToUse);
-          console.log('🎤 ¿Tiene contenido?', !!textToUse.trim());
           
-          if (textToUse && textToUse.trim()) {
-            console.log('🎤 ✅ ESTABLECIENDO TEXTO EN INPUT:', textToUse.trim());
-            setInput(prev => {
-              console.log('🎤 Input anterior:', prev);
-              console.log('🎤 Input nuevo:', textToUse.trim());
-              return textToUse.trim();
-            });
+          if (textToUse) {
+            console.log('🎤 ✅ ESTABLECIENDO TEXTO EN INPUT:', textToUse);
+            setInput(textToUse);
             setVoiceError(null);
             
-            // Solo si hay resultado final, marcar como completado
-            if (finalTranscript && finalTranscript.trim()) {
-              console.log('🎤 ✅ Resultado final detectado, deteniendo procesamiento');
+            if (finalTranscript.trim()) {
+              console.log('🎤 ✅ Resultado final - marcando como completado');
               setIsProcessingAudio(false);
             }
           } else {
             console.log('🎤 ❌ No hay texto válido para establecer');
-          }
-          
-          if (!hasValidResult) {
-            console.log('🎤 ⚠️ No se encontraron resultados válidos');
           }
           
           console.log('🎤 ===== FIN EVENTO ONRESULT =====');
@@ -175,9 +173,14 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
               errorMessage = 'Permisos de micrófono denegados. Habilítalos en tu navegador.';
               break;
             case 'no-speech':
-              errorMessage = 'No se detectó voz. Intenta hablar más fuerte, más cerca del micrófono, o en un ambiente más silencioso.';
-              console.log('🎤 ⚠️ Error no-speech - puede ser que no se detectó voz clara');
-              console.log('🎤 💡 Consejos: Habla claramente, asegúrate de que el micrófono no esté silenciado, reduce ruido de fondo');
+              // Solo mostrar error si no hay texto en el input
+              if (!input.trim()) {
+                errorMessage = 'No se detectó voz clara. Intenta hablar inmediatamente después de presionar el micrófono.';
+                console.log('🎤 ⚠️ Error no-speech - intentando de nuevo...');
+              } else {
+                console.log('🎤 ℹ️ Error no-speech pero hay texto en input, ignorando error');
+                errorMessage = ''; // No mostrar error si ya hay texto
+              }
               break;
             case 'audio-capture':
               errorMessage = 'No se pudo acceder al micrófono. Verifica que esté conectado.';
@@ -622,14 +625,21 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         }
       }
       
-      // Timeout de 10 segundos (un poco más tiempo)
+      // Timeout de 15 segundos para continuous mode
       timeoutRef.current = window.setTimeout(() => {
         console.log('🎤 ⏰ Timeout alcanzado - deteniendo reconocimiento');
         if (recognitionRef.current && isRecording) {
-          recognitionRef.current.stop();
-          setVoiceError('Timeout: No se detectó voz. Habla más fuerte y intenta de nuevo.');
+          try {
+            recognitionRef.current.stop();
+          } catch (e) {
+            console.log('🎤 ⚠️ Error al detener por timeout:', e);
+          }
+          // Solo mostrar error si no hay texto en el input
+          if (!input.trim()) {
+            setVoiceError('Tiempo agotado. Intenta hablar inmediatamente después de presionar el micrófono.');
+          }
         }
-      }, 10000);
+      }, 15000);
       
       console.log('🎤 🎯 Lanzando recognition.start()...');
       recognitionRef.current.start();
