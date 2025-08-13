@@ -66,14 +66,21 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         
         const recognition = new SpeechRecognition();
         recognition.lang = 'es-ES'; // Español general
-        recognition.continuous = true; // Cambiar a true para evitar que se detenga muy rápido
+        recognition.continuous = false; // Cambiar de vuelta a false para evitar timeout prematuro
         recognition.interimResults = true; // Permitir resultados intermedios
         recognition.maxAlternatives = 1; // Reducir a 1 para mejor rendimiento
         
-        // Configuraciones específicas del navegador
+        // Configuraciones específicas del navegador para mejorar sensibilidad
         if ('webkitSpeechRecognition' in window) {
           // Configuraciones específicas de Chrome/WebKit
           (recognition as any).serviceURI = undefined;
+          // Intentar configuraciones adicionales para mejor detección
+          try {
+            (recognition as any).audioTrack = true;
+            (recognition as any).grammars = undefined;
+          } catch (e) {
+            console.log('🎤 No se pudieron aplicar configuraciones adicionales');
+          }
         }
         
         recognition.onstart = () => {
@@ -162,8 +169,9 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
               errorMessage = 'Permisos de micrófono denegados. Habilítalos en tu navegador.';
               break;
             case 'no-speech':
-              errorMessage = 'No se detectó voz. Habla más fuerte y cerca del micrófono.';
+              errorMessage = 'No se detectó voz. Intenta hablar más fuerte, más cerca del micrófono, o en un ambiente más silencioso.';
               console.log('🎤 ⚠️ Error no-speech - puede ser que no se detectó voz clara');
+              console.log('🎤 💡 Consejos: Habla claramente, asegúrate de que el micrófono no esté silenciado, reduce ruido de fondo');
               break;
             case 'audio-capture':
               errorMessage = 'No se pudo acceder al micrófono. Verifica que esté conectado.';
@@ -462,12 +470,39 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
     }
   };
 
-  // Verificar permisos de micrófono
+  // Verificar permisos de micrófono y nivel de audio
   const checkMicrophonePermissions = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(track => track.stop()); // Liberar inmediatamente
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100
+        }
+      });
+      
       console.log('🎤 ✅ Permisos de micrófono concedidos');
+      
+      // Verificar nivel de audio brevemente
+      const audioContext = new AudioContext();
+      const analyser = audioContext.createAnalyser();
+      const microphone = audioContext.createMediaStreamSource(stream);
+      microphone.connect(analyser);
+      
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(dataArray);
+      const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+      console.log('🎤 🔊 Nivel de audio detectado:', average);
+      
+      // Limpiar recursos
+      microphone.disconnect();
+      audioContext.close();
+      stream.getTracks().forEach(track => track.stop());
+      
+      if (average < 5) {
+        console.log('🎤 ⚠️ Nivel de audio muy bajo, pero continuando...');
+      }
+      
       return true;
     } catch (error) {
       console.error('🎤 ❌ Error de permisos de micrófono:', error);
@@ -490,14 +525,14 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         return;
       }
       
-      // Timeout de 15 segundos para detectar si no hay resultados
+      // Timeout de 8 segundos para detectar si no hay resultados
       timeoutRef.current = window.setTimeout(() => {
         console.log('🎤 ⏰ Timeout alcanzado - deteniendo reconocimiento');
         if (recognitionRef.current && isRecording) {
           recognitionRef.current.stop();
-          setVoiceError('Timeout: No se detectó voz. Intenta de nuevo.');
+          setVoiceError('Timeout: No se detectó voz. Habla más fuerte y intenta de nuevo.');
         }
-      }, 15000);
+      }, 8000);
       
       recognitionRef.current.start();
     } catch (error) {
