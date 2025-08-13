@@ -45,6 +45,7 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
   const [isAudioSupported, setIsAudioSupported] = useState(false);
   const recognitionRef = useRef<any>(null);
   const recordingTimerRef = useRef<number | null>(null);
+  const timeoutRef = useRef<number | null>(null);
 
   // Obtener categorías del store
   const { categories, fetchCategories } = useCategoriesStore();
@@ -64,15 +65,15 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         setIsAudioSupported(true);
         
         const recognition = new SpeechRecognition();
-        recognition.lang = 'es-ES'; // Cambiar a español general (mejor compatibilidad)
-        recognition.continuous = false;
+        recognition.lang = 'es-ES'; // Español general
+        recognition.continuous = true; // Cambiar a true para evitar que se detenga muy rápido
         recognition.interimResults = true; // Permitir resultados intermedios
-        recognition.maxAlternatives = 3; // Más alternativas
+        recognition.maxAlternatives = 1; // Reducir a 1 para mejor rendimiento
         
-        // Configurar timeout más largo para dar más tiempo
+        // Configuraciones específicas del navegador
         if ('webkitSpeechRecognition' in window) {
-          // Configuraciones específicas de Chrome
-          (recognition as any).serviceURI = undefined; // Usar servicio por defecto
+          // Configuraciones específicas de Chrome/WebKit
+          (recognition as any).serviceURI = undefined;
         }
         
         recognition.onstart = () => {
@@ -212,12 +213,21 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         recognition.onend = () => {
           console.log('🎤 Reconocimiento terminado');
           console.log('🎤 Input actual:', input);
-          setIsRecording(false);
-          setIsProcessingAudio(false); // Siempre detener el procesamiento
+          
+          // Limpiar timeout
+          if (timeoutRef.current) {
+            window.clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+          }
+          
+          // Limpiar timer de grabación
           if (recordingTimerRef.current) {
             window.clearInterval(recordingTimerRef.current);
             recordingTimerRef.current = null;
           }
+          
+          setIsRecording(false);
+          setIsProcessingAudio(false); // Siempre detener el procesamiento
           
           // Debug: verificar si hay algo en el input después del reconocimiento
           setTimeout(() => {
@@ -241,6 +251,9 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
     return () => {
       if (recordingTimerRef.current) {
         window.clearInterval(recordingTimerRef.current);
+      }
+      if (timeoutRef.current) {
+        window.clearTimeout(timeoutRef.current);
       }
     };
   }, []);
@@ -449,16 +462,47 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
     }
   };
 
+  // Verificar permisos de micrófono
+  const checkMicrophonePermissions = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop()); // Liberar inmediatamente
+      console.log('🎤 ✅ Permisos de micrófono concedidos');
+      return true;
+    } catch (error) {
+      console.error('🎤 ❌ Error de permisos de micrófono:', error);
+      setVoiceError('Necesitas conceder permisos de micrófono para usar esta función.');
+      return false;
+    }
+  };
+
   // Funciones para manejo de audio
-  const startVoiceRecording = () => {
+  const startVoiceRecording = async () => {
     if (!recognitionRef.current || !isAudioSupported) return;
     
     try {
+      console.log('🎤 Iniciando grabación...');
       setVoiceError(null);
+      
+      // Verificar permisos primero
+      const hasPermissions = await checkMicrophonePermissions();
+      if (!hasPermissions) {
+        return;
+      }
+      
+      // Timeout de 15 segundos para detectar si no hay resultados
+      timeoutRef.current = window.setTimeout(() => {
+        console.log('🎤 ⏰ Timeout alcanzado - deteniendo reconocimiento');
+        if (recognitionRef.current && isRecording) {
+          recognitionRef.current.stop();
+          setVoiceError('Timeout: No se detectó voz. Intenta de nuevo.');
+        }
+      }, 15000);
+      
       recognitionRef.current.start();
     } catch (error) {
       console.error('❌ Error al iniciar grabación:', error);
-      setVoiceError('Error al iniciar la grabación');
+      setVoiceError('Error al iniciar la grabación: ' + (error as Error).message);
     }
   };
 
@@ -466,6 +510,14 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
     if (!recognitionRef.current) return;
     
     try {
+      console.log('🎤 Deteniendo grabación manualmente...');
+      
+      // Limpiar timeout
+      if (timeoutRef.current) {
+        window.clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      
       recognitionRef.current.stop();
     } catch (error) {
       console.error('❌ Error al detener grabación:', error);
