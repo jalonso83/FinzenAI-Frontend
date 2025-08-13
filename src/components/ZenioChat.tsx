@@ -107,17 +107,19 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
             }
           }
           
-          // Usar transcripción final si existe, sino la intermedia
+          // Usar transcripción final si existe, sino la intermedia para mostrar progreso
           const textToUse = finalTranscript || interimTranscript;
           
           if (textToUse.trim()) {
+            console.log('🎤 Estableciendo texto en input:', textToUse.trim());
             setInput(textToUse.trim());
             setVoiceError(null);
             
-            // Si es resultado final, detener completamente
-            if (finalTranscript) {
+            // Solo si hay resultado final, marcar como completado
+            if (finalTranscript && finalTranscript.trim()) {
+              console.log('🎤 Resultado final detectado, deteniendo reconocimiento');
               setIsProcessingAudio(false);
-              setIsRecording(false);
+              // No establecer isRecording a false aquí, dejar que onend lo maneje
             }
           }
         };
@@ -169,15 +171,29 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         recognition.onsoundend = () => {
           console.log('🎤 Sonido terminado');
         };
+        
+        recognition.onnomatch = () => {
+          console.log('🎤 No se encontró coincidencia en el reconocimiento');
+          setVoiceError('No se pudo entender lo que dijiste. Intenta hablar más claro.');
+        };
 
         recognition.onend = () => {
           console.log('🎤 Reconocimiento terminado');
+          console.log('🎤 Input actual:', input);
           setIsRecording(false);
           setIsProcessingAudio(false); // Siempre detener el procesamiento
           if (recordingTimerRef.current) {
             window.clearInterval(recordingTimerRef.current);
             recordingTimerRef.current = null;
           }
+          
+          // Debug: verificar si hay algo en el input después del reconocimiento
+          setTimeout(() => {
+            const currentInput = document.querySelector('input[type="text"]') as HTMLInputElement;
+            if (currentInput) {
+              console.log('🎤 Valor del input después de reconocimiento:', currentInput.value);
+            }
+          }, 100);
         };
         
         recognitionRef.current = recognition;
