@@ -743,21 +743,6 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
           </div>
         ))}
       </div>
-      {/* Audio Compatibility Notice */}
-      {isAudioSupported && (
-        <div className="px-6 py-2 bg-green-50 border-t border-green-200">
-          <div className="flex items-start gap-2">
-            <div className="text-green-600 mt-0.5">🎤</div>
-            <div className="text-green-800 text-sm">
-              <div className="font-medium">Funcionalidad de voz activada</div>
-              <div className="text-xs mt-1 text-green-600">
-                ✅ Si conectas auriculares Bluetooth, deberían funcionar mejor con el reconocimiento de voz.
-                💡 Consejo: Habla inmediatamente después de presionar el micrófono.
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Voice Error Message */}
       {voiceError && (
@@ -837,30 +822,15 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
               readOnly={submitting || isRecording || isProcessingAudio}
             />
             
-            {/* Microphone Button */}
+            {/* Microphone Button - Deshabilitado */}
             {isAudioSupported && (
               <button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  console.log('🎤 👆 Click en botón micrófono - isRecording:', isRecording);
-                  if (isRecording) {
-                    console.log('🎤 👆 Llamando stopVoiceRecording desde botón');
-                    stopVoiceRecording();
-                  } else {
-                    console.log('🎤 👆 Llamando startVoiceRecording desde botón');
-                    startVoiceRecording();
-                  }
-                }}
-                className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-lg transition ${
-                  isRecording 
-                    ? 'bg-red-500 text-white hover:bg-red-600' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                } disabled:opacity-50`}
-                disabled={submitting || isProcessingAudio}
-                aria-label={isRecording ? 'Detener grabación' : 'Iniciar grabación de voz'}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-lg bg-gray-300 text-gray-500 cursor-not-allowed opacity-50"
+                disabled={true}
+                title="Funcionalidad de voz no disponible"
               >
-                {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
+                <Mic size={18} />
               </button>
             )}
           </div>
