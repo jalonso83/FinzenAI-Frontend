@@ -491,33 +491,46 @@ const DateReport: React.FC = () => {
                   </div>
                 )}
 
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="font-medium text-gray-900 mb-2">Estadísticas del período</p>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="p-3 bg-gray-50 rounded-lg relative">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="font-medium text-gray-900">Estadísticas del período</p>
                     <div className="relative group">
-                      <span className="text-gray-600">Volatilidad: </span>
-                      <span className="font-medium cursor-help border-b border-dotted border-gray-400">{formatCurrency(reportData.metrics.volatility)}</span>
-                      <div className="absolute bottom-full left-0 mb-2 w-64 bg-black text-white text-xs rounded-lg p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-                        <div className="font-semibold mb-1">💸 Volatilidad</div>
-                        <div>Cuánto varían tus gastos día a día. Si es alto = gastos muy diferentes cada día. Si es bajo = gastos más constantes.</div>
+                      <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center cursor-help">
+                        <span className="text-white text-xs font-bold">i</span>
+                      </div>
+                      <div className="absolute top-full right-0 mt-2 w-80 bg-black text-white text-xs rounded-lg p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 shadow-lg">
+                        <div className="space-y-3">
+                          <div>
+                            <div className="font-semibold mb-1 text-yellow-300">💸 Volatilidad</div>
+                            <div>Cuánto varían tus gastos día a día. Si es alto = gastos muy diferentes cada día. Si es bajo = gastos más constantes.</div>
+                          </div>
+                          <div>
+                            <div className="font-semibold mb-1 text-red-300">🔥 Burn Rate</div>
+                            <div>Cuánta plata gastas en promedio cada día. Es como tu "velocidad de gasto diario".</div>
+                          </div>
+                          {reportData.metrics.runway && (
+                            <div>
+                              <div className="font-semibold mb-1 text-orange-300">🛣️ Runway (Pista de aterrizaje)</div>
+                              <div>Cuántos días puedes seguir gastando al ritmo actual antes de quedarte sin dinero. Como el combustible que te queda en el tanque.</div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <div className="relative group">
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-gray-600">Volatilidad: </span>
+                      <span className="font-medium">{formatCurrency(reportData.metrics.volatility)}</span>
+                    </div>
+                    <div>
                       <span className="text-gray-600">Burn rate: </span>
-                      <span className="font-medium cursor-help border-b border-dotted border-gray-400">{formatCurrency(reportData.metrics.burnRate)}/día</span>
-                      <div className="absolute bottom-full right-0 mb-2 w-64 bg-black text-white text-xs rounded-lg p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-                        <div className="font-semibold mb-1">🔥 Burn Rate</div>
-                        <div>Cuánta plata gastas en promedio cada día. Es como tu "velocidad de gasto diario".</div>
-                      </div>
+                      <span className="font-medium">{formatCurrency(reportData.metrics.burnRate)}/día</span>
                     </div>
                     {reportData.metrics.runway && (
-                      <div className="col-span-2 relative group">
+                      <div className="col-span-2">
                         <span className="text-gray-600">Runway: </span>
-                        <span className="font-medium text-orange-600 cursor-help border-b border-dotted border-orange-400">{reportData.metrics.runway} días</span>
-                        <div className="absolute bottom-full left-0 mb-2 w-80 bg-black text-white text-xs rounded-lg p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-                          <div className="font-semibold mb-1">🛣️ Runway (Pista de aterrizaje)</div>
-                          <div>Cuántos días puedes seguir gastando al ritmo actual antes de quedarte sin dinero. Como el combustible que te queda en el tanque.</div>
-                        </div>
+                        <span className="font-medium text-orange-600">{reportData.metrics.runway} días</span>
                       </div>
                     )}
                   </div>
@@ -545,7 +558,7 @@ const DateReport: React.FC = () => {
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <span className={`text-xs font-bold ${
-                            percentage > 30 ? 'text-white drop-shadow-sm' : 'text-gray-700'
+                            percentage > 50 ? 'text-white drop-shadow-lg' : 'text-gray-900'
                           }`}>
                             {formatCurrency(amount)}
                           </span>

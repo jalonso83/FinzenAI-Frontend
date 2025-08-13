@@ -51,18 +51,42 @@ const PieChart: React.FC<PieChartProps> = ({ data, title = "Distribución por Ca
     
     let colors;
     if (detectedType === 'INCOME') {
-      // Gama de verdes variados para ingresos - empezar con verde principal y variar
+      // Gama amplia para ingresos - verde → azul-verde → azul → lima
       colors = [
-        '#10B981', '#22C55E', '#16A34A', '#15803D', '#059669', 
-        '#047857', '#065F46', '#14B8A6', '#0D9488', '#0F766E',
-        '#06B6D4', '#0EA5E9', '#0284C7', '#84CC16', '#65A30D'
+        '#10B981', // Verde principal
+        '#14B8A6', // Teal
+        '#06B6D4', // Azul cielo  
+        '#22C55E', // Verde claro
+        '#0EA5E9', // Azul
+        '#84CC16', // Lima
+        '#3B82F6', // Azul royal
+        '#059669', // Verde esmeralda
+        '#0284C7', // Azul cobalto
+        '#65A30D', // Lima oscuro
+        '#6366F1', // Índigo
+        '#16A34A', // Verde bosque
+        '#0F766E', // Verde azulado oscuro
+        '#8B5CF6', // Violeta
+        '#047857'  // Verde pino
       ];
     } else {
-      // Gama de rojos variados para gastos - empezar con rojo principal y variar
+      // Gama amplia para gastos - rojo → naranja → amarillo → rosa
       colors = [
-        '#EF4444', '#DC2626', '#B91C1C', '#991B1B', '#7F1D1D',
-        '#F87171', '#FCA5A5', '#FEE2E2', '#F97316', '#EA580C', 
-        '#C2410C', '#9A3412', '#F59E0B', '#D97706', '#B45309'
+        '#EF4444', // Rojo principal
+        '#F97316', // Naranja
+        '#F59E0B', // Ámbar
+        '#DC2626', // Rojo oscuro
+        '#FB923C', // Naranja claro
+        '#FDE047', // Amarillo
+        '#EC4899', // Rosa
+        '#B91C1C', // Rojo granate
+        '#FDBA74', // Durazno
+        '#FEF08A', // Amarillo claro
+        '#F472B6', // Rosa claro
+        '#7C2D12', // Marrón rojizo
+        '#F97171', // Rojo coral
+        '#FBBF24', // Amarillo dorado
+        '#BE185D'  // Rosa fucsia
       ];
     }
     
