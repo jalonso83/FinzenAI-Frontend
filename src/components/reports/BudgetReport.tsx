@@ -106,9 +106,17 @@ const BudgetReport: React.FC = () => {
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
         endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
         break;
-      case 'currentYear':
-        startDate = new Date(now.getFullYear(), 0, 1);
-        endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+      case 'lastMonth':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+        break;
+      case 'last3Months':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+        break;
+      case 'lastYear':
+        startDate = new Date(now.getFullYear() - 1, 0, 1);
+        endDate = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59);
         break;
       case 'custom':
         startDate = customStartDate ? new Date(customStartDate) : new Date(now.getFullYear(), now.getMonth(), 1);
@@ -238,8 +246,10 @@ const BudgetReport: React.FC = () => {
                 onChange={(e) => setDateRange(e.target.value)}
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option value="currentMonth">Mes Actual</option>
-                <option value="currentYear">Año Actual</option>
+                <option value="currentMonth">Este Mes</option>
+                <option value="lastMonth">Mes Anterior</option>
+                <option value="last3Months">Últimos 3 Meses</option>
+                <option value="lastYear">Año Anterior</option>
                 <option value="custom">Personalizado</option>
               </select>
             </div>

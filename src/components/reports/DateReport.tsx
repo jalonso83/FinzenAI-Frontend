@@ -61,7 +61,7 @@ const DateReport: React.FC = () => {
   const [reportData, setReportData] = useState<DateReportData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState('lastMonth');
+  const [dateRange, setDateRange] = useState('currentMonth');
   const [granularity, setGranularity] = useState('weekly');
   const [transactionType, setTransactionType] = useState('both');
   const [customStartDate, setCustomStartDate] = useState('');
@@ -83,12 +83,16 @@ const DateReport: React.FC = () => {
     let startDate, endDate;
 
     switch (dateRange) {
-      case 'lastWeek':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        endDate = new Date();
+      case 'currentMonth':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
         break;
       case 'lastMonth':
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+        break;
+      case 'last3Months':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
         endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
         break;
       case 'lastYear':
@@ -214,9 +218,10 @@ const DateReport: React.FC = () => {
                 onChange={(e) => setDateRange(e.target.value)}
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option value="lastWeek">Última Semana</option>
-                <option value="lastMonth">Mes Actual</option>
-                <option value="lastYear">Último Año</option>
+                <option value="currentMonth">Este Mes</option>
+                <option value="lastMonth">Mes Anterior</option>
+                <option value="last3Months">Últimos 3 Meses</option>
+                <option value="lastYear">Año Anterior</option>
                 <option value="custom">Personalizado</option>
               </select>
             </div>
