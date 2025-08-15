@@ -1,7 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { Toaster } from 'react-hot-toast';
 import Navigation from '../components/Navigation';
 import DebtCapacityIndicator from '../components/dashboard/DebtCapacityIndicator';
 import ExpensesPieChart from '../components/dashboard/ExpensesPieChart';
+import { FinScoreDisplay, StreakCounter, useGamificationStore } from '../components/gamification';
+import { useGamificationEventListener, triggerGamificationEvent } from '../hooks/useGamificationToasts';
+import { EventType } from '../types/gamification';
 import './Dashboard.css';
 import './Screens.css';
 import { transactionsAPI, categoriesAPI, budgetsAPI } from '../utils/api';
@@ -26,6 +30,12 @@ const Dashboard = () => {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Gamification store
+  const { finScore, streak, fetchFinScore, fetchUserStreak } = useGamificationStore();
+  
+  // Hook para escuchar eventos de gamificación y mostrar toasts
+  useGamificationEventListener();
 
   // Fetch de datos
   const fetchData = useCallback(async () => {
@@ -51,13 +61,23 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+    // Cargar datos de gamificación
+    fetchFinScore();
+    fetchUserStreak();
+  }, [fetchData, fetchFinScore, fetchUserStreak]);
 
   // Escuchar eventos para refrescar datos
   useEffect(() => {
     const handleTransactionCreated = () => {
       console.log('[Dashboard] Evento zenio-transaction-created recibido, refrescando datos...');
       fetchData();
+      // Trigger gamification toast for transaction created
+      triggerGamificationEvent(EventType.ADD_TRANSACTION);
+      // Refresh gamification data when new transaction is created
+      setTimeout(() => {
+        fetchFinScore();
+        fetchUserStreak();
+      }, 500); // Small delay to ensure backend has processed the gamification event
     };
     
     const handleTransactionUpdated = () => {
@@ -70,6 +90,11 @@ const Dashboard = () => {
     
     const handleBudgetCreated = () => {
       fetchData();
+      // Trigger gamification toast for budget created
+      triggerGamificationEvent(EventType.CREATE_BUDGET);
+      setTimeout(() => {
+        fetchFinScore();
+      }, 500);
     };
 
     const handleBudgetUpdated = () => {
@@ -82,6 +107,11 @@ const Dashboard = () => {
 
     const handleGoalCreated = () => {
       fetchData();
+      // Trigger gamification toast for goal created
+      triggerGamificationEvent(EventType.CREATE_GOAL);
+      setTimeout(() => {
+        fetchFinScore();
+      }, 500);
     };
 
     const handleGoalUpdated = () => {
@@ -168,37 +198,96 @@ const Dashboard = () => {
       {loading && <div className="text-center py-4">Cargando datos...</div>}
       <h2 className="section-title text-text mb-6 font-bold">Resumen Financiero</h2>
 
-      {/* Balance General */}
-      <div className="card bg-card border border-border rounded-xl mb-6">
-        <h3 className="card-title text-text font-semibold mb-4 ml-5">Balance Actual: {new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}</h3>
-        <div className="balance-container flex flex-col gap-4">
-          <div className="main-balance-container flex flex-col gap-4">
+      {/* Balance General + Gamificación */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Balance Actual - Versión Compacta */}
+        <div className="card bg-card border border-border rounded-xl">
+          <h3 className="card-title text-text font-semibold mb-4 ml-5">Balance Actual: {new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}</h3>
+          <div className="balance-container flex flex-col gap-3">
             <div className="current-balance-section flex flex-col gap-2">
-              <div className="balance-row flex gap-4">
-                <div className="balance-box flex-1 bg-success-bg text-success-text rounded-lg p-4 pl-6 ml-5">
-                  <p className="balance-label text-sm font-medium mb-1">Ingresos</p>
-                  <p className="balance-amount text-2xl font-bold">RD${ingresos.toLocaleString('es-DO')}</p>
+              <div className="balance-row flex gap-3">
+                <div className="balance-box flex-1 bg-success-bg text-success-text rounded-lg p-3 ml-5">
+                  <p className="balance-label text-xs font-medium mb-1">Ingresos</p>
+                  <p className="balance-amount text-lg font-bold">RD${ingresos.toLocaleString('es-DO')}</p>
                 </div>
-                <div className="balance-box flex-1 bg-danger-bg text-danger-text rounded-lg p-4 mr-5">
-                  <p className="balance-label text-sm font-medium mb-1">Gastos</p>
-                  <p className="balance-amount text-2xl font-bold">RD${gastos.toLocaleString('es-DO')}</p>
+                <div className="balance-box flex-1 bg-danger-bg text-danger-text rounded-lg p-3 mr-5">
+                  <p className="balance-label text-xs font-medium mb-1">Gastos</p>
+                  <p className="balance-amount text-lg font-bold">RD${gastos.toLocaleString('es-DO')}</p>
                 </div>
               </div>
-              <div className="balance-box bg-secondary text-white rounded-lg p-4 ml-5 mr-5">
-                <p className="balance-label text-sm font-medium mb-1">Saldo Total</p>
-                <p className="balance-amount text-2xl font-bold">RD${saldoTotal.toLocaleString('es-DO')}</p>
-              </div>
-              <div className="balance-box bg-background border border-border rounded-lg p-4 ml-5 mr-5">
-                <p className="balance-label text-sm font-medium mb-1">Saldo Total Mes Anterior</p>
-                <p className="balance-amount text-2xl font-bold text-primary">RD${saldoPrev.toLocaleString('es-DO')}</p>
+              <div className="balance-box bg-secondary text-white rounded-lg p-3 ml-5 mr-5">
+                <p className="balance-label text-xs font-medium mb-1">Saldo Total</p>
+                <p className="balance-amount text-xl font-bold">RD${saldoTotal.toLocaleString('es-DO')}</p>
               </div>
             </div>
           </div>
+          
+          {/* Tips Compactos */}
+          <div className="mt-3 mx-5 mb-4">
+            <div className="bg-blue-50 rounded-lg p-3">
+              <p className="text-xs text-blue-700">
+                💡 <strong>Tip:</strong> {
+                  saldoTotal > 0 
+                    ? 'Excelente gestión financiera este mes' 
+                    : 'Revisa tus gastos para mejorar tu balance'
+                }
+              </p>
+            </div>
+            {saldoTotal > saldoPrev && (
+              <div className="bg-green-50 rounded-lg p-2 mt-2">
+                <p className="text-xs text-green-700">
+                  📈 Mejoraste RD${(saldoTotal - saldoPrev).toLocaleString('es-DO')} vs mes anterior
+                </p>
+              </div>
+            )}
+          </div>
         </div>
-        <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-700">
-            💡 <strong>Consejo:</strong> Comienza agregando tus primeras transacciones para ver tu balance actualizado.
-          </p>
+
+        {/* Card de Gamificación */}
+        <div className="card bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200 rounded-xl">
+          <h3 className="card-title text-text font-semibold mb-4 ml-5 flex items-center gap-2">
+            <span className="text-blue-600">🏆</span>
+            Tu Progreso FinZen
+          </h3>
+          
+          <div className="px-5 pb-5">
+            <div className="grid grid-cols-1 gap-4">
+              {/* FinScore Display */}
+              <div className="flex justify-center">
+                <FinScoreDisplay 
+                  score={finScore || undefined} 
+                  size="md" 
+                  showLevel={true}
+                  showProgress={true}
+                  animate={true}
+                />
+              </div>
+              
+              {/* Streak Counter */}
+              <div className="flex justify-center">
+                <StreakCounter 
+                  streak={streak || undefined}
+                  size="sm"
+                  showDays={true}
+                  animate={true}
+                />
+              </div>
+              
+              {/* Quick Stats */}
+              <div className="bg-white/50 rounded-lg p-3 mt-2">
+                <div className="grid grid-cols-2 gap-2 text-center">
+                  <div>
+                    <p className="text-xs text-gray-600">Transacciones</p>
+                    <p className="text-sm font-bold text-blue-600">{transactions.length}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600">Presupuestos</p>
+                    <p className="text-sm font-bold text-purple-600">{activeBudgets.length}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -468,6 +557,13 @@ const Dashboard = () => {
 
       {/* Capacidad de Endeudamiento */}
       <DebtCapacityIndicator />
+      
+      {/* Toast Notifications Container */}
+      <Toaster 
+        position="bottom-right"
+        reverseOrder={false}
+        gutter={8}
+      />
     </div>
   );
 };
