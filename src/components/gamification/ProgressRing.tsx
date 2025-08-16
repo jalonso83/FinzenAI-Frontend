@@ -10,7 +10,7 @@ import type { ProgressRingProps } from '../../types/gamification';
 
 const DEFAULT_SIZE = 120;
 const DEFAULT_STROKE_WIDTH = 8;
-const DEFAULT_COLOR = '#3B82F6';
+const DEFAULT_COLOR = '#2563EB'; // Azul de la aplicación
 const DEFAULT_BACKGROUND_COLOR = '#E5E7EB';
 
 // Presets de colores comunes
@@ -92,12 +92,21 @@ const ProgressRing: React.FC<ProgressRingProps> = ({
           </linearGradient>
         </defs>
 
-        {/* Círculo de fondo */}
+        {/* Fondo verde del círculo */}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius + strokeWidth/2}
+          fill="#10B981"
+          className="opacity-90"
+        />
+
+        {/* Círculo de fondo para el aro */}
         <circle
           cx={center}
           cy={center}
           r={radius}
-          stroke={backgroundColor}
+          stroke="#E5E7EB"
           strokeWidth={strokeWidth}
           fill="none"
           className="opacity-30"
@@ -167,14 +176,14 @@ const ProgressRing: React.FC<ProgressRingProps> = ({
             }}
             className="text-center"
           >
-            <div className="text-2xl font-bold text-gray-900 leading-none">
+            <div className="text-2xl font-bold text-white leading-none drop-shadow-sm">
               {animate ? (
                 <AnimatedNumber value={percentage} suffix="%" />
               ) : (
                 `${Math.round(percentage)}%`
               )}
             </div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-white/80 mt-1 drop-shadow-sm">
               {normalizedProgress.toLocaleString()} / {max.toLocaleString()}
             </div>
           </motion.div>
@@ -376,6 +385,123 @@ export const ProgressRingPulse: React.FC<ProgressRingProps> = (props) => {
     >
       <ProgressRing {...props} />
     </motion.div>
+  );
+};
+
+// Anillo de progreso especializado para FinScore con estilo verde y azul
+export const ProgressRingFinScore: React.FC<{
+  progress: number;
+  max: number;
+  level: number;
+  size?: number;
+  animate?: boolean;
+  className?: string;
+}> = ({ progress, max, level, size = 120, animate = true, className }) => {
+  const strokeWidth = 8;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const center = size / 2;
+  
+  // Normalizar el progreso
+  const normalizedProgress = Math.min(Math.max(progress, 0), max);
+  const percentage = (normalizedProgress / max) * 100;
+  const strokeDasharray = circumference;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+  return (
+    <div className={cn('relative inline-flex items-center justify-center', className)}>
+      <svg
+        width={size}
+        height={size}
+        className="transform -rotate-90"
+        viewBox={`0 0 ${size} ${size}`}
+      >
+        {/* Fondo verde del círculo completo */}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius + strokeWidth/2}
+          fill="#10B981"
+          className="drop-shadow-md"
+        />
+
+        {/* Círculo de fondo para el aro (gris claro) */}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          stroke="#E5E7EB"
+          strokeWidth={strokeWidth}
+          fill="none"
+          className="opacity-40"
+        />
+
+        {/* Círculo de progreso azul de la aplicación */}
+        <motion.circle
+          cx={center}
+          cy={center}
+          r={radius}
+          stroke="#2563EB"
+          strokeWidth={strokeWidth}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={strokeDasharray}
+          initial={{ strokeDashoffset: animate ? circumference : strokeDashoffset }}
+          animate={{ strokeDashoffset }}
+          transition={{
+            duration: animate ? 1.5 : 0,
+            ease: [0.4, 0, 0.2, 1],
+            delay: animate ? 0.2 : 0
+          }}
+          className="drop-shadow-sm"
+          style={{
+            filter: percentage > 80 ? 'drop-shadow(0 0 6px #2563EB60)' : undefined
+          }}
+        />
+
+        {/* Punto brillante al final del progreso */}
+        {percentage > 5 && (
+          <motion.circle
+            cx={center + radius * Math.cos((percentage / 100) * 2 * Math.PI - Math.PI / 2)}
+            cy={center + radius * Math.sin((percentage / 100) * 2 * Math.PI - Math.PI / 2)}
+            r={strokeWidth / 2.5}
+            fill="#FFFFFF"
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{
+              duration: animate ? 0.5 : 0,
+              delay: animate ? 1.2 : 0
+            }}
+            className="drop-shadow-lg"
+          />
+        )}
+      </svg>
+
+      {/* Texto central con fondo verde y letras blancas */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{
+            duration: animate ? 0.8 : 0,
+            delay: animate ? 0.5 : 0,
+            type: 'spring',
+            stiffness: 200
+          }}
+          className="text-center"
+        >
+          <div className="text-3xl font-bold text-white leading-none drop-shadow-lg">
+            {level}
+          </div>
+          <div className="text-xs text-white/90 mt-1 drop-shadow-sm font-medium">
+            NIVEL
+          </div>
+          <div className="text-sm text-white/80 mt-1 drop-shadow-sm">
+            {Math.round(percentage)}%
+          </div>
+        </motion.div>
+      </div>
+    </div>
   );
 };
 
