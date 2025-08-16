@@ -3,7 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import Navigation from '../components/Navigation';
 import DebtCapacityIndicator from '../components/dashboard/DebtCapacityIndicator';
 import ExpensesPieChart from '../components/dashboard/ExpensesPieChart';
-import { FinScoreDisplay, StreakCounter, useGamificationStore } from '../components/gamification';
+import { FinScoreDisplay, StreakCounter, ProgressRingFinScore, useGamificationStore } from '../components/gamification';
 import { useGamificationEventListener, triggerGamificationEvent } from '../hooks/useGamificationToasts';
 import { EventType } from '../types/gamification';
 import './Dashboard.css';
@@ -254,13 +254,19 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 gap-4">
               {/* FinScore Display */}
               <div className="flex justify-center">
-                <FinScoreDisplay 
-                  score={finScore || undefined} 
-                  size="md" 
-                  showLevel={true}
-                  showProgress={true}
-                  animate={true}
-                />
+                {finScore ? (
+                  <ProgressRingFinScore
+                    progress={finScore.currentScore}
+                    max={finScore.currentScore + finScore.pointsToNextLevel}
+                    level={finScore.level}
+                    size={140}
+                    animate={true}
+                  />
+                ) : (
+                  <div className="w-[140px] h-[140px] rounded-full bg-gray-200 animate-pulse flex items-center justify-center">
+                    <span className="text-gray-500 text-sm">Cargando...</span>
+                  </div>
+                )}
               </div>
               
               {/* Streak Counter */}
