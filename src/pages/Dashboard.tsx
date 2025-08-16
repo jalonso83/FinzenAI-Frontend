@@ -3,7 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import Navigation from '../components/Navigation';
 import DebtCapacityIndicator from '../components/dashboard/DebtCapacityIndicator';
 import ExpensesPieChart from '../components/dashboard/ExpensesPieChart';
-import { FinScoreDisplay, StreakCounter, ProgressRingFinScore, useGamificationStore } from '../components/gamification';
+import { FinScoreDisplay, StreakCounter, StreakCounterFinZen, ProgressRingFinScore, useGamificationStore } from '../components/gamification';
 import { useGamificationEventListener, triggerGamificationEvent } from '../hooks/useGamificationToasts';
 import { EventType } from '../types/gamification';
 import './Dashboard.css';
@@ -271,10 +271,9 @@ const Dashboard = () => {
               
               {/* Streak Counter */}
               <div className="flex justify-center">
-                <StreakCounter 
+                <StreakCounterFinZen 
                   streak={streak || undefined}
-                  size="sm"
-                  showDays={true}
+                  size={120}
                   animate={true}
                 />
               </div>

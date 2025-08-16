@@ -406,4 +406,238 @@ export const StreakInfo: React.FC<{
   );
 };
 
+// ===== VERSIÓN MEJORADA CON ESTILO VERDE/AZUL/BLANCO =====
+
+export const StreakCounterFinZen: React.FC<{
+  streak?: UserStreak | null;
+  size?: number;
+  animate?: boolean;
+  className?: string;
+}> = ({ streak, size = 120, animate = true, className }) => {
+  
+  // Si no hay racha o está inactiva
+  if (!streak || !streak.isActive || streak.currentStreak === 0) {
+    return (
+      <div className={cn(
+        'relative flex flex-col items-center justify-center rounded-full',
+        'bg-gray-200 border-4 border-gray-300 shadow-md',
+        className
+      )}
+      style={{ width: size, height: size }}
+      >
+        <Calendar className="text-gray-400 mb-2" size={size * 0.25} />
+        <div className="text-xl font-bold text-gray-500">0</div>
+        <div className="text-xs text-gray-400 font-medium">DÍAS</div>
+      </div>
+    );
+  }
+
+  // Cálculos para el anillo de progreso basado en próxima meta
+  const milestones = [3, 7, 14, 30, 60, 100];
+  const nextMilestone = milestones.find(m => m > streak.currentStreak) || 100;
+  const previousMilestone = milestones.find(m => m <= streak.currentStreak) || 0;
+  const progress = previousMilestone === 0 
+    ? (streak.currentStreak / nextMilestone) * 100
+    : ((streak.currentStreak - previousMilestone) / (nextMilestone - previousMilestone)) * 100;
+
+  const strokeWidth = 8;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const center = size / 2;
+  const strokeDasharray = circumference;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+
+  // Animaciones
+  const containerVariants = {
+    initial: { scale: 0, opacity: 0 },
+    animate: { 
+      scale: 1, 
+      opacity: 1,
+      transition: { 
+        type: 'spring' as const, 
+        stiffness: 300, 
+        damping: 20
+      }
+    }
+  };
+
+  const flameVariants = {
+    idle: {
+      scale: [1, 1.1, 0.9, 1],
+      rotate: [-2, 2, -1, 1, 0],
+      y: [0, -2, 1, 0]
+    }
+  };
+
+  // Efecto de partículas flotantes
+  const particles = Array.from({ length: 4 }, (_, i) => i);
+
+  return (
+    <motion.div
+      variants={animate ? containerVariants : undefined}
+      initial={animate ? 'initial' : undefined}
+      animate={animate ? 'animate' : undefined}
+      whileHover={{ scale: animate ? 1.05 : undefined }}
+      className={cn('relative inline-flex items-center justify-center', className)}
+      style={{ width: size, height: size }}
+    >
+      {/* SVG para el anillo de progreso */}
+      <svg
+        width={size}
+        height={size}
+        className="absolute transform -rotate-90"
+        viewBox={`0 0 ${size} ${size}`}
+      >
+        {/* Fondo verde del círculo */}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius + strokeWidth/2}
+          fill="#10B981"
+          className="drop-shadow-md"
+        />
+
+        {/* Círculo de fondo para el aro */}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          stroke="#E5E7EB"
+          strokeWidth={strokeWidth}
+          fill="none"
+          className="opacity-40"
+        />
+
+        {/* Círculo de progreso azul */}
+        <motion.circle
+          cx={center}
+          cy={center}
+          r={radius}
+          stroke="#2563EB"
+          strokeWidth={strokeWidth}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={strokeDasharray}
+          initial={{ strokeDashoffset: animate ? circumference : strokeDashoffset }}
+          animate={{ strokeDashoffset }}
+          transition={{
+            duration: animate ? 1.5 : 0,
+            ease: [0.4, 0, 0.2, 1],
+            delay: animate ? 0.3 : 0
+          }}
+          className="drop-shadow-sm"
+        />
+
+        {/* Punto brillante al final del progreso */}
+        {progress > 5 && (
+          <motion.circle
+            cx={center + radius * Math.cos((progress / 100) * 2 * Math.PI - Math.PI / 2)}
+            cy={center + radius * Math.sin((progress / 100) * 2 * Math.PI - Math.PI / 2)}
+            r={strokeWidth / 2.5}
+            fill="#FFFFFF"
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{
+              duration: animate ? 0.5 : 0,
+              delay: animate ? 1.4 : 0
+            }}
+            className="drop-shadow-lg"
+          />
+        )}
+      </svg>
+
+      {/* Partículas flotantes para efecto de fuego */}
+      {animate && streak.currentStreak >= 7 && (
+        <div className="absolute inset-0">
+          {particles.map((i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1.5 h-1.5 bg-white/70 rounded-full"
+              style={{
+                left: `${40 + (i * 5)}%`,
+                top: `${35 + (i % 2) * 15}%`
+              }}
+              animate={{
+                y: [-8, -20, -8],
+                opacity: [0.7, 0.3, 0.7],
+                scale: [0.8, 1.2, 0.8]
+              }}
+              transition={{
+                duration: 2 + i * 0.3,
+                repeat: Infinity,
+                repeatType: 'reverse',
+                delay: i * 0.2
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Contenido central */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        {/* Ícono de llama animada */}
+        <motion.div
+          animate={animate ? flameVariants.idle : undefined}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            repeatType: 'reverse',
+            ease: 'easeInOut'
+          }}
+          className="mb-1"
+        >
+          <Flame 
+            className="text-white drop-shadow-lg" 
+            size={size * 0.2}
+            fill="currentColor"
+          />
+        </motion.div>
+
+        {/* Número de días */}
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{
+            duration: animate ? 0.8 : 0,
+            delay: animate ? 0.5 : 0,
+            type: 'spring',
+            stiffness: 200
+          }}
+          className="text-center"
+        >
+          <div className="text-3xl font-bold text-white leading-none drop-shadow-lg">
+            {animate ? (
+              <AnimatedStreakNumber value={streak.currentStreak} />
+            ) : (
+              streak.currentStreak
+            )}
+          </div>
+          <div className="text-xs text-white/90 mt-1 drop-shadow-sm font-medium">
+            {streak.currentStreak === 1 ? 'DÍA' : 'DÍAS'}
+          </div>
+          <div className="text-sm text-white/80 mt-1 drop-shadow-sm">
+            Meta: {nextMilestone}
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Anillo pulsante para rachas altas */}
+      {streak.currentStreak >= 7 && animate && (
+        <motion.div
+          className="absolute inset-0 rounded-full border-2 border-white/30"
+          animate={{
+            scale: [1, 1.1, 1],
+            opacity: [0.3, 0.6, 0.3]
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: 'easeInOut'
+          }}
+        />
+      )}
+    </motion.div>
+  );
+};
+
 export default StreakCounter;
