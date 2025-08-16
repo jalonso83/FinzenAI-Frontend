@@ -9,7 +9,7 @@ import { EventType } from '../types/gamification';
 
 const TOAST_CONFIG = {
   duration: 3000,
-  position: 'bottom-right' as const,
+  position: 'top-right' as const,
   style: {
     borderRadius: '12px',
     background: '#fff',
