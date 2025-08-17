@@ -176,8 +176,34 @@ const Transactions = () => {
       setTransactions(txRes.transactions || []);
       toast.success('¡Transacción creada!');
       
-      // Disparar eventos de gamificación y actualización
-      triggerGamificationEvent(EventType.ADD_TRANSACTION);
+      // Esperar un momento para que el backend procese los eventos de gamificación
+      setTimeout(async () => {
+        try {
+          // Obtener eventos recientes de gamificación del backend
+          const eventsRes = await fetch('/api/gamification/events/recent', {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          
+          if (eventsRes.ok) {
+            const eventsData = await eventsRes.json();
+            if (eventsData.success && eventsData.data.length > 0) {
+              // Disparar eventos de gamificación basados en los eventos del backend
+              eventsData.data.forEach((event: any) => {
+                if (event.pointsAwarded > 0) {
+                  triggerGamificationEvent(EventType.ADD_TRANSACTION, event.pointsAwarded);
+                }
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error obteniendo eventos de gamificación:', error);
+          // Fallback: disparar evento genérico
+          triggerGamificationEvent(EventType.ADD_TRANSACTION);
+        }
+      }, 1000);
+      
       window.dispatchEvent(new Event('budgets-updated'));
       
       // Disparar evento para que otras páginas se actualicen
