@@ -126,9 +126,23 @@ const Dashboard = () => {
       fetchData();
     };
 
+    // Handler para transacciones manuales
+    const handleManualTransactionCreated = () => {
+      console.log('[Dashboard] Evento transaction-created recibido, refrescando datos...');
+      fetchData();
+      // Trigger gamification toast for manual transaction created
+      triggerGamificationEvent(EventType.ADD_TRANSACTION);
+      // Refresh gamification data when new transaction is created
+      setTimeout(() => {
+        fetchFinScore();
+        fetchUserStreak();
+      }, 500); // Small delay to ensure backend has processed the gamification event
+    };
+
     window.addEventListener('zenio-transaction-created', handleTransactionCreated);
     window.addEventListener('zenio-transaction-updated', handleTransactionUpdated);
     window.addEventListener('zenio-transaction-deleted', handleTransactionDeleted);
+    window.addEventListener('transaction-created', handleManualTransactionCreated);
     window.addEventListener('zenio-budget-created', handleBudgetCreated);
     window.addEventListener('zenio-budget-updated', handleBudgetUpdated);
     window.addEventListener('zenio-budget-deleted', handleBudgetDeleted);
@@ -141,6 +155,7 @@ const Dashboard = () => {
       window.removeEventListener('zenio-transaction-created', handleTransactionCreated);
       window.removeEventListener('zenio-transaction-updated', handleTransactionUpdated);
       window.removeEventListener('zenio-transaction-deleted', handleTransactionDeleted);
+      window.removeEventListener('transaction-created', handleManualTransactionCreated);
       window.removeEventListener('zenio-budget-created', handleBudgetCreated);
       window.removeEventListener('zenio-budget-updated', handleBudgetUpdated);
       window.removeEventListener('zenio-budget-deleted', handleBudgetDeleted);

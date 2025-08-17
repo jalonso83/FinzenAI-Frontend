@@ -6,6 +6,8 @@ import './Screens.css';
 import './Transactions.css';
 import { toast } from 'react-hot-toast';
 import type { Transaction, Category } from '../utils/api';
+import { triggerGamificationEvent } from '../hooks/useGamificationToasts';
+import { EventType } from '../types/gamification';
 
 const Transactions = () => {
   const [showForm, setShowForm] = useState(false);
@@ -166,11 +168,20 @@ const Transactions = () => {
   const handleCreateTransaction = async (data: any) => {
     setLoading(true);
     try {
-      await transactionsAPI.create(data);
+      const response = await transactionsAPI.create(data);
       const txRes = await transactionsAPI.getAll();
       setTransactions(txRes.transactions || []);
       toast.success('¡Transacción creada!');
+      
+      // Disparar eventos de gamificación y actualización
+      triggerGamificationEvent(EventType.ADD_TRANSACTION);
       window.dispatchEvent(new Event('budgets-updated'));
+      
+      // Disparar evento para que otras páginas se actualicen
+      window.dispatchEvent(new CustomEvent('transaction-created', { 
+        detail: { transaction: response.transaction } 
+      }));
+      
     } catch {
       toast.error('Error al crear transacción');
     } finally {
