@@ -6,7 +6,7 @@ import './Screens.css';
 import './Transactions.css';
 import { toast } from 'react-hot-toast';
 import type { Transaction, Category } from '../utils/api';
-import { triggerGamificationEvent } from '../hooks/useGamificationToasts';
+import { triggerGamificationEvent, useGamificationEventListener } from '../hooks/useGamificationToasts';
 import { EventType } from '../types/gamification';
 
 const Transactions = () => {
@@ -23,6 +23,9 @@ const Transactions = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Hook para escuchar eventos de gamificación y mostrar toasts
+  useGamificationEventListener();
 
   const fetchData = async () => {
     setLoading(true);
