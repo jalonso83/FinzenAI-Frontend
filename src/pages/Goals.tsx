@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Toaster } from 'react-hot-toast';
 import Navigation from '../components/Navigation';
 import GoalForm from '../components/goals/GoalForm';
 import GoalList from '../components/goals/GoalList';
@@ -198,6 +199,13 @@ const Goals = () => {
           />
         )}
       </div>
+      
+      {/* Toast Notifications Container */}
+      <Toaster 
+        position="top-right"
+        reverseOrder={false}
+        gutter={8}
+      />
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Toaster } from 'react-hot-toast';
 import Navigation from '../components/Navigation';
 import BudgetForm from '../components/budget/BudgetForm';
 import BudgetList from '../components/budget/BudgetList';
@@ -132,6 +133,13 @@ const Budgets = () => {
           />
         )}
       </div>
+      
+      {/* Toast Notifications Container */}
+      <Toaster 
+        position="top-right"
+        reverseOrder={false}
+        gutter={8}
+      />
     </div>
   );
 };

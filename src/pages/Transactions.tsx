@@ -4,7 +4,7 @@ import TransactionFormWeb from '../components/TransactionFormWeb.tsx';
 import { transactionsAPI, categoriesAPI } from '../utils/api';
 import './Screens.css';
 import './Transactions.css';
-import { toast } from 'react-hot-toast';
+import { toast, Toaster } from 'react-hot-toast';
 import type { Transaction, Category } from '../utils/api';
 import { triggerGamificationEvent, useGamificationEventListener } from '../hooks/useGamificationToasts';
 import { EventType } from '../types/gamification';
@@ -176,33 +176,8 @@ const Transactions = () => {
       setTransactions(txRes.transactions || []);
       toast.success('¡Transacción creada!');
       
-      // Esperar un momento para que el backend procese los eventos de gamificación
-      setTimeout(async () => {
-        try {
-          // Obtener eventos recientes de gamificación del backend
-          const eventsRes = await fetch('/api/gamification/events/recent', {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-          });
-          
-          if (eventsRes.ok) {
-            const eventsData = await eventsRes.json();
-            if (eventsData.success && eventsData.data.length > 0) {
-              // Disparar eventos de gamificación basados en los eventos del backend
-              eventsData.data.forEach((event: any) => {
-                if (event.pointsAwarded > 0) {
-                  triggerGamificationEvent(EventType.ADD_TRANSACTION, event.pointsAwarded);
-                }
-              });
-            }
-          }
-        } catch (error) {
-          console.error('Error obteniendo eventos de gamificación:', error);
-          // Fallback: disparar evento genérico
-          triggerGamificationEvent(EventType.ADD_TRANSACTION);
-        }
-      }, 1000);
+      // Disparar toast de gamificación inmediatamente (como hace Zenio)
+      triggerGamificationEvent(EventType.ADD_TRANSACTION, 5); // 5 puntos base por transacción
       
       window.dispatchEvent(new Event('budgets-updated'));
       
@@ -442,6 +417,13 @@ const Transactions = () => {
           />
         )}
       </div>
+      
+      {/* Toast Notifications Container */}
+      <Toaster 
+        position="top-right"
+        reverseOrder={false}
+        gutter={8}
+      />
     </div>
   );
 };

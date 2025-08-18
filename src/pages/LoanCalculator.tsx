@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Toaster } from 'react-hot-toast';
 import Navigation from '../components/Navigation';
 import './Screens.css';
 import * as XLSX from 'xlsx';
@@ -529,6 +530,13 @@ const LoanCalculator = () => {
           </div>
         </div>
       </div>
+      
+      {/* Toast Notifications Container */}
+      <Toaster 
+        position="top-right"
+        reverseOrder={false}
+        gutter={8}
+      />
     </div>
   );
 };

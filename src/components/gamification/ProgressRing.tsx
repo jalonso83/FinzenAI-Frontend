@@ -490,16 +490,16 @@ export const ProgressRingFinScore: React.FC<{
           }}
           className="text-center"
         >
-          <div className="text-3xl font-bold text-white leading-none drop-shadow-lg">
+          <div className="text-2xl font-bold text-white leading-none drop-shadow-lg">
             {level}
           </div>
-          <div className="text-xs text-white/90 mt-1 drop-shadow-sm font-medium">
+          <div className="text-xs text-white/90 mt-0.5 drop-shadow-sm font-medium">
             NIVEL
           </div>
-          <div className="text-sm text-white/80 mt-1 drop-shadow-sm">
+          <div className="text-lg font-bold text-white mt-1 drop-shadow-sm">
             {Math.round(percentage)}%
           </div>
-          <div className="text-xs text-white/70 mt-1 drop-shadow-sm">
+          <div className="text-sm text-white/90 mt-0.5 drop-shadow-sm font-medium">
             {normalizedProgress.toLocaleString()} pts
           </div>
         </motion.div>

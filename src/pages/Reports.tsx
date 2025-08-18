@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from '../stores/auth';
 import Navigation from '../components/Navigation';
 import CategoryReport from '../components/reports/CategoryReport';
@@ -107,6 +108,13 @@ const Reports = () => {
           </div>
         </div>
       </div>
+      
+      {/* Toast Notifications Container */}
+      <Toaster 
+        position="top-right"
+        reverseOrder={false}
+        gutter={8}
+      />
     </div>
   );
 };
