@@ -179,22 +179,13 @@ const Transactions = () => {
       // Esperar a que el backend procese la gamificación y obtener puntos REALES
       setTimeout(async () => {
         try {
-          const token = localStorage.getItem('token');
-          const eventsRes = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3000'}/api/gamification/events/recent?since=${new Date(Date.now() - 30000).toISOString()}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
+          const eventsRes = await api.get(`/gamification/events/recent?since=${new Date(Date.now() - 30000).toISOString()}`);
           
-          if (eventsRes.ok) {
-            const eventsData = await eventsRes.json();
-            if (eventsData.success && eventsData.data.length > 0) {
-              // Sumar TODOS los puntos otorgados por esta transacción
-              const totalPoints = eventsData.data.reduce((sum: number, event: any) => sum + (event.pointsAwarded || 0), 0);
-              if (totalPoints > 0) {
-                triggerGamificationEvent(EventType.ADD_TRANSACTION, totalPoints);
-              }
+          if (eventsRes.data.success && eventsRes.data.data.length > 0) {
+            // Sumar TODOS los puntos otorgados por esta transacción
+            const totalPoints = eventsRes.data.data.reduce((sum: number, event: any) => sum + (event.pointsAwarded || 0), 0);
+            if (totalPoints > 0) {
+              triggerGamificationEvent(EventType.ADD_TRANSACTION, totalPoints);
             }
           }
         } catch (error) {

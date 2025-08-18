@@ -63,21 +63,12 @@ const Dashboard = () => {
   // Función para obtener puntos recientes REALES del backend
   const fetchRecentPoints = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3000'}/api/gamification/events/recent?since=${thirtyDaysAgo}&limit=1000`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await api.get(`/gamification/events/recent?since=${thirtyDaysAgo}&limit=1000`);
       
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
-          const totalPoints = data.data.reduce((sum: number, event: any) => sum + (event.pointsAwarded || 0), 0);
-          setRecentPoints(totalPoints);
-        }
+      if (response.data.success && response.data.data) {
+        const totalPoints = response.data.data.reduce((sum: number, event: any) => sum + (event.pointsAwarded || 0), 0);
+        setRecentPoints(totalPoints);
       }
     } catch (error) {
       console.error('Error obteniendo puntos recientes:', error);

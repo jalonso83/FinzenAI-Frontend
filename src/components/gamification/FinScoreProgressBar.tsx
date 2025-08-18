@@ -101,17 +101,6 @@ const FinScoreProgressBar: React.FC<FinScoreProgressBarProps> = ({
         </div>
       </div>
 
-      {/* Badge de nivel */}
-      <div className="mt-4 text-center">
-        <motion.div
-          className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-medium"
-          whileHover={{ scale: 1.05 }}
-          transition={{ type: "spring", stiffness: 400, damping: 10 }}
-        >
-          <span className="mr-1">🏆</span>
-          Nunca baja
-        </motion.div>
-      </div>
     </div>
   );
 };

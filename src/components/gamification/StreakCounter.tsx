@@ -492,7 +492,7 @@ export const StreakCounterFinZen: React.FC<{
         <circle
           cx={center}
           cy={center}
-          r={radius + strokeWidth/2}
+          r={radius + strokeWidth/2 + 4}
           fill="#10B981"
           className="drop-shadow-md"
         />
