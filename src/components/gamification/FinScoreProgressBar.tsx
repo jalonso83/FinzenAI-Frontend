@@ -1,5 +1,5 @@
-// FinScoreProgressBar - Barra de progreso elegante para FinScore acumulativo
-// Sistema de niveles con progreso verde y animaciones suaves
+// FinScoreProgressBar - Barra de progreso elegante para Índice FinZen
+// Sistema de niveles con progreso verde y animaciones suaves - v2.0 Nueva escala
 
 import React from 'react';
 import { motion } from 'framer-motion';
@@ -39,7 +39,7 @@ const FinScoreProgressBar: React.FC<FinScoreProgressBarProps> = ({
           NIVEL {level}
         </div>
         <div className="text-sm text-gray-600">
-          Índice FinZen
+          Índice FinZen (actualizado)
         </div>
       </div>
 
