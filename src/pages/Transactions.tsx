@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navigation from '../components/Navigation';
 import TransactionFormWeb from '../components/TransactionFormWeb.tsx';
 import { transactionsAPI, categoriesAPI } from '../utils/api';
+import api from '../utils/api';
 import './Screens.css';
 import './Transactions.css';
 import { toast, Toaster } from 'react-hot-toast';

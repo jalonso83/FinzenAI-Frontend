@@ -87,13 +87,6 @@ const FinScoreProgressBar: React.FC<FinScoreProgressBarProps> = ({
       {/* Información adicional */}
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Progreso en nivel:</span>
-          <span className="font-medium text-gray-800">
-            {progressInLevel.toLocaleString()} / {totalNeededInLevel.toLocaleString()}
-          </span>
-        </div>
-        
-        <div className="flex justify-between text-sm">
           <span className="text-gray-600">Para siguiente nivel:</span>
           <span className="font-medium text-green-600">
             +{pointsToNextLevel.toLocaleString()} pts

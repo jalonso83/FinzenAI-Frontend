@@ -587,8 +587,8 @@ export const StreakCounterFinZen: React.FC<{
           className="mb-1"
         >
           <Flame 
-            className="text-white drop-shadow-lg" 
-            size={size * 0.2}
+            className="text-red-500 drop-shadow-lg" 
+            size={size * 0.18}
             fill="currentColor"
           />
         </motion.div>
