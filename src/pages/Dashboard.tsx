@@ -68,13 +68,21 @@ const Dashboard = () => {
       
       if (response.data.success && response.data.data) {
         const totalPoints = response.data.data.reduce((sum: number, event: any) => sum + (event.pointsAwarded || 0), 0);
-        setRecentPoints(totalPoints);
+        // Los puntos recientes no pueden ser mayores que el total acumulativo
+        const currentFinScore = finScore?.currentScore || 0;
+        const validRecentPoints = Math.min(totalPoints, currentFinScore);
+        setRecentPoints(validRecentPoints);
+        
+        // Log para debugging
+        console.log('[Debug] Puntos recientes del backend:', totalPoints);
+        console.log('[Debug] FinScore actual:', currentFinScore);
+        console.log('[Debug] Puntos recientes validados:', validRecentPoints);
       }
     } catch (error) {
       console.error('Error obteniendo puntos recientes:', error);
       setRecentPoints(0);
     }
-  }, []);
+  }, [finScore]);
 
   useEffect(() => {
     fetchData();
@@ -324,18 +332,42 @@ const Dashboard = () => {
               {/* Columna 3: Racha de Días */}
               <div className="flex justify-center lg:justify-end">
                 <div className="bg-white rounded-lg p-4 w-full max-w-sm text-center">
+                  {/* Header */}
                   <div className="mb-4">
-                    <div className="text-sm text-gray-600 font-medium mb-3">
-                      Racha Días
+                    <div className="text-2xl mb-2">🔥</div>
+                    <div className="text-sm text-gray-600 font-medium">
+                      Días de Racha
                     </div>
+                  </div>
+
+                  {/* Contenido principal */}
+                  <div className="mb-3">
                     <StreakCounterFinZen 
                       streak={streak || undefined}
                       size={100}
                       animate={true}
                     />
                   </div>
-                  <div className="text-xs text-gray-500">
+
+                  {/* Subtitle */}
+                  <div className="text-sm text-gray-500 mb-4">
                     Días consecutivos
+                  </div>
+
+                  {/* Indicador de estado */}
+                  <div className="flex justify-center">
+                    <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                      (streak?.currentStreak || 0) >= 7 
+                        ? 'bg-red-100 text-red-800' 
+                        : (streak?.currentStreak || 0) >= 3 
+                        ? 'bg-orange-100 text-orange-800'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      <span className="mr-1">
+                        {(streak?.currentStreak || 0) >= 7 ? '🔥' : (streak?.currentStreak || 0) >= 3 ? '📈' : '📊'}
+                      </span>
+                      {(streak?.currentStreak || 0) >= 7 ? 'En racha' : (streak?.currentStreak || 0) >= 3 ? 'Progreso' : 'Inicio'}
+                    </div>
                   </div>
                 </div>
               </div>

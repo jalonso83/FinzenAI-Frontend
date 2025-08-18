@@ -492,7 +492,7 @@ export const StreakCounterFinZen: React.FC<{
         <circle
           cx={center}
           cy={center}
-          r={radius + strokeWidth/2 + 4}
+          r={radius + strokeWidth/2 + 8}
           fill="#10B981"
           className="drop-shadow-md"
         />
@@ -588,7 +588,7 @@ export const StreakCounterFinZen: React.FC<{
         >
           <Flame 
             className="text-red-500 drop-shadow-lg" 
-            size={size * 0.18}
+            size={size * 0.16}
             fill="currentColor"
           />
         </motion.div>
