@@ -176,8 +176,31 @@ const Transactions = () => {
       setTransactions(txRes.transactions || []);
       toast.success('¡Transacción creada!');
       
-      // Disparar toast de gamificación inmediatamente (como hace Zenio)
-      triggerGamificationEvent(EventType.ADD_TRANSACTION, 5); // 5 puntos base por transacción
+      // Esperar a que el backend procese la gamificación y obtener puntos REALES
+      setTimeout(async () => {
+        try {
+          const token = localStorage.getItem('token');
+          const eventsRes = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3000'}/api/gamification/events/recent?since=${new Date(Date.now() - 30000).toISOString()}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (eventsRes.ok) {
+            const eventsData = await eventsRes.json();
+            if (eventsData.success && eventsData.data.length > 0) {
+              // Sumar TODOS los puntos otorgados por esta transacción
+              const totalPoints = eventsData.data.reduce((sum: number, event: any) => sum + (event.pointsAwarded || 0), 0);
+              if (totalPoints > 0) {
+                triggerGamificationEvent(EventType.ADD_TRANSACTION, totalPoints);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error obteniendo puntos reales del backend:', error);
+        }
+      }, 1500); // Dar tiempo al backend para procesar
       
       window.dispatchEvent(new Event('budgets-updated'));
       

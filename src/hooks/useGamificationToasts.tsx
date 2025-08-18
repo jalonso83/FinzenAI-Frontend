@@ -27,7 +27,7 @@ const TOAST_CONFIG = {
 const EVENT_MESSAGES: Record<string, { icon: string; message: string; color: string }> = {
   [EventType.ADD_TRANSACTION]: {
     icon: '⭐',
-    message: '+5 FinScore por agregar transacción',
+    message: 'Puntos ganados por transacción',
     color: '#3B82F6'
   },
   [EventType.CREATE_BUDGET]: {
@@ -144,7 +144,7 @@ export const useGamificationToasts = () => {
     if (!config) return;
 
     const message = customPoints 
-      ? `+${customPoints} FinScore`
+      ? `+${customPoints} puntos`
       : config.message;
 
     toast.custom((t) => (

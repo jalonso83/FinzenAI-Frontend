@@ -6,6 +6,8 @@ export { default as FinScoreDisplay, FinScoreCompact } from './FinScoreDisplay';
 export { default as BadgeGrid, BadgeCarousel } from './BadgeGrid';
 export { default as StreakCounter, StreakCompact, StreakInfo, StreakCounterFinZen } from './StreakCounter';
 export { default as ProgressRing, ProgressRingSmall, ProgressRingMulti, ProgressRingLabeled, ProgressRingPulse, ProgressRingFinScore, PROGRESS_COLORS } from './ProgressRing';
+export { default as FinScoreProgressBar } from './FinScoreProgressBar';
+export { default as RecentPointsCard } from './RecentPointsCard';
 export { default as GamificationModal, useGamificationModal } from './GamificationModal';
 
 // ===== RE-EXPORTACIONES DE TIPOS =====

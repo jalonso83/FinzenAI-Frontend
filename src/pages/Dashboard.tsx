@@ -3,7 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import Navigation from '../components/Navigation';
 import DebtCapacityIndicator from '../components/dashboard/DebtCapacityIndicator';
 import ExpensesPieChart from '../components/dashboard/ExpensesPieChart';
-import { FinScoreDisplay, StreakCounter, StreakCounterFinZen, ProgressRingFinScore, useGamificationStore } from '../components/gamification';
+import { FinScoreDisplay, StreakCounter, StreakCounterFinZen, ProgressRingFinScore, FinScoreProgressBar, RecentPointsCard, useGamificationStore } from '../components/gamification';
 import { useGamificationEventListener, triggerGamificationEvent } from '../hooks/useGamificationToasts';
 import { EventType } from '../types/gamification';
 import './Dashboard.css';
@@ -33,6 +33,7 @@ const Dashboard = () => {
   
   // Gamification store
   const { finScore, streak, fetchFinScore, fetchUserStreak } = useGamificationStore();
+  const [recentPoints, setRecentPoints] = useState<number>(0);
   
   // Hook para escuchar eventos de gamificación y mostrar toasts
   useGamificationEventListener();
@@ -59,12 +60,38 @@ const Dashboard = () => {
     }
   }, []);
 
+  // Función para obtener puntos recientes REALES del backend
+  const fetchRecentPoints = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3000'}/api/gamification/events/recent?since=${thirtyDaysAgo}&limit=1000`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          const totalPoints = data.data.reduce((sum: number, event: any) => sum + (event.pointsAwarded || 0), 0);
+          setRecentPoints(totalPoints);
+        }
+      }
+    } catch (error) {
+      console.error('Error obteniendo puntos recientes:', error);
+      setRecentPoints(0);
+    }
+  }, []);
+
   useEffect(() => {
     fetchData();
     // Cargar datos de gamificación
     fetchFinScore();
     fetchUserStreak();
-  }, [fetchData, fetchFinScore, fetchUserStreak]);
+    fetchRecentPoints();
+  }, [fetchData, fetchFinScore, fetchUserStreak, fetchRecentPoints]);
 
   // Escuchar eventos para refrescar datos
   useEffect(() => {
@@ -77,6 +104,7 @@ const Dashboard = () => {
       setTimeout(() => {
         fetchFinScore();
         fetchUserStreak();
+        fetchRecentPoints();
       }, 500); // Small delay to ensure backend has processed the gamification event
     };
     
@@ -136,6 +164,7 @@ const Dashboard = () => {
       setTimeout(() => {
         fetchFinScore();
         fetchUserStreak();
+        fetchRecentPoints();
       }, 500); // Small delay to ensure backend has processed the gamification event
     };
 
@@ -258,7 +287,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Card de Gamificación */}
+        {/* Card de Gamificación - 3 Columnas */}
         <div className="card bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200 rounded-xl">
           <h3 className="card-title text-text font-semibold mb-4 ml-5 flex items-center gap-2">
             <span className="text-blue-600">🏆</span>
@@ -266,44 +295,71 @@ const Dashboard = () => {
           </h3>
           
           <div className="px-5 pb-5">
-            <div className="grid grid-cols-1 gap-4">
-              {/* FinScore Display */}
-              <div className="flex justify-center">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Columna 1: FinScore Acumulativo */}
+              <div className="flex justify-center lg:justify-start">
                 {finScore ? (
-                  <ProgressRingFinScore
-                    progress={finScore.currentScore}
-                    max={finScore.currentScore + finScore.pointsToNextLevel}
+                  <FinScoreProgressBar
+                    currentScore={finScore.currentScore}
                     level={finScore.level}
-                    size={140}
+                    pointsToNextLevel={finScore.pointsToNextLevel}
                     animate={true}
+                    className="w-full max-w-sm"
                   />
                 ) : (
-                  <div className="w-[140px] h-[140px] rounded-full bg-gray-200 animate-pulse flex items-center justify-center">
-                    <span className="text-gray-500 text-sm">Cargando...</span>
+                  <div className="w-full max-w-sm bg-white rounded-lg p-4 animate-pulse">
+                    <div className="text-center mb-4">
+                      <div className="w-20 h-6 bg-gray-200 rounded mx-auto mb-2"></div>
+                      <div className="w-24 h-4 bg-gray-200 rounded mx-auto"></div>
+                    </div>
+                    <div className="w-full h-3 bg-gray-200 rounded mb-4"></div>
+                    <div className="space-y-2">
+                      <div className="w-full h-4 bg-gray-200 rounded"></div>
+                      <div className="w-full h-4 bg-gray-200 rounded"></div>
+                    </div>
                   </div>
                 )}
               </div>
               
-              {/* Streak Counter */}
+              {/* Columna 2: Puntos Recientes */}
               <div className="flex justify-center">
-                <StreakCounterFinZen 
-                  streak={streak || undefined}
-                  size={120}
+                <RecentPointsCard
+                  points={recentPoints}
                   animate={true}
+                  className="w-full max-w-sm"
                 />
               </div>
               
-              {/* Quick Stats */}
-              <div className="bg-white/50 rounded-lg p-3 mt-2">
-                <div className="grid grid-cols-2 gap-2 text-center">
-                  <div>
-                    <p className="text-xs text-gray-600">Transacciones</p>
-                    <p className="text-sm font-bold text-blue-600">{transactions.length}</p>
+              {/* Columna 3: Racha de Días */}
+              <div className="flex justify-center lg:justify-end">
+                <div className="bg-white rounded-lg p-4 w-full max-w-sm text-center">
+                  <div className="mb-4">
+                    <div className="text-sm text-gray-600 font-medium mb-3">
+                      Racha Días
+                    </div>
+                    <StreakCounterFinZen 
+                      streak={streak || undefined}
+                      size={100}
+                      animate={true}
+                    />
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-600">Presupuestos</p>
-                    <p className="text-sm font-bold text-purple-600">{activeBudgets.length}</p>
+                  <div className="text-xs text-gray-500">
+                    Días consecutivos
                   </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Quick Stats - Ahora en una sola fila */}
+            <div className="bg-white/50 rounded-lg p-3 mt-4">
+              <div className="grid grid-cols-2 gap-2 text-center">
+                <div>
+                  <p className="text-xs text-gray-600">Transacciones</p>
+                  <p className="text-sm font-bold text-blue-600">{transactions.length}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600">Presupuestos</p>
+                  <p className="text-sm font-bold text-purple-600">{activeBudgets.length}</p>
                 </div>
               </div>
             </div>
