@@ -68,15 +68,18 @@ const Dashboard = () => {
       
       if (response.data.success && response.data.data) {
         const totalPoints = response.data.data.reduce((sum: number, event: any) => sum + (event.pointsAwarded || 0), 0);
-        // Los puntos recientes no pueden ser mayores que el total acumulativo
-        const currentFinScore = finScore?.currentScore || 0;
-        const validRecentPoints = Math.min(totalPoints, currentFinScore);
-        setRecentPoints(validRecentPoints);
+        setRecentPoints(totalPoints);
         
-        // Log para debugging
-        console.log('[Debug] Puntos recientes del backend:', totalPoints);
-        console.log('[Debug] FinScore actual:', currentFinScore);
-        console.log('[Debug] Puntos recientes validados:', validRecentPoints);
+        // Debugging detallado para encontrar el problema real
+        console.log('[DEBUG COMPLETO] ===== PUNTOS RECIENTES =====');
+        console.log('[DEBUG] URL llamada:', `/gamification/events/recent?since=${thirtyDaysAgo}&limit=1000`);
+        console.log('[DEBUG] Fecha desde:', thirtyDaysAgo);
+        console.log('[DEBUG] Eventos devueltos:', response.data.data.length);
+        console.log('[DEBUG] Eventos completos:', response.data.data);
+        console.log('[DEBUG] Puntos recientes calculados:', totalPoints);
+        console.log('[DEBUG] FinScore actual:', finScore?.currentScore || 0);
+        console.log('[DEBUG] PROBLEMA: Puntos recientes >', finScore?.currentScore ? 'SÍ' : 'NO');
+        console.log('=======================================');
       }
     } catch (error) {
       console.error('Error obteniendo puntos recientes:', error);
