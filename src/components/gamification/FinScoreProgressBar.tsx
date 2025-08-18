@@ -39,7 +39,7 @@ const FinScoreProgressBar: React.FC<FinScoreProgressBarProps> = ({
           NIVEL {level}
         </div>
         <div className="text-sm text-gray-600">
-          FinScore Acumulativo
+          Índice FinZen
         </div>
       </div>
 
@@ -47,10 +47,10 @@ const FinScoreProgressBar: React.FC<FinScoreProgressBarProps> = ({
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
           <span className="text-xs font-medium text-gray-600">
-            {currentScore.toLocaleString()} pts
+            {currentScore}/100
           </span>
           <span className="text-xs font-medium text-gray-600">
-            {nextLevelPoints.toLocaleString()} pts
+            Siguiente nivel
           </span>
         </div>
         
@@ -89,7 +89,7 @@ const FinScoreProgressBar: React.FC<FinScoreProgressBarProps> = ({
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Para siguiente nivel:</span>
           <span className="font-medium text-green-600">
-            +{pointsToNextLevel.toLocaleString()} pts
+            {pointsToNextLevel === 0 ? 'Nivel máximo' : `+${pointsToNextLevel} puntos`}
           </span>
         </div>
       </div>
