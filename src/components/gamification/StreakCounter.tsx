@@ -415,19 +415,69 @@ export const StreakCounterFinZen: React.FC<{
   className?: string;
 }> = ({ streak, size = 120, animate = true, className }) => {
   
+  // Animaciones comunes
+  const containerVariants = {
+    initial: { scale: 0, opacity: 0 },
+    animate: { 
+      scale: 1, 
+      opacity: 1,
+      transition: { 
+        type: 'spring' as const, 
+        stiffness: 300, 
+        damping: 20
+      }
+    }
+  };
+  
   // Si no hay racha o está inactiva
   if (!streak || !streak.isActive || streak.currentStreak === 0) {
+    const strokeWidth = 8;
+    const radius = (size - strokeWidth) / 2;
+    const center = size / 2;
+
     return (
-      <div className={cn(
-        'relative flex flex-col items-center justify-center rounded-full',
-        'bg-green-500 border-4 border-blue-500 shadow-md',
-        className
-      )}
-      style={{ width: size, height: size }}
+      <motion.div
+        variants={animate ? containerVariants : undefined}
+        initial={animate ? 'initial' : undefined}
+        animate={animate ? 'animate' : undefined}
+        className={cn('relative inline-flex items-center justify-center', className)}
+        style={{ width: size, height: size }}
       >
-        <div className="text-2xl font-bold text-white">0</div>
-        <div className="text-xs text-white/90 font-medium">DÍAS</div>
-      </div>
+        {/* SVG para el círculo */}
+        <svg
+          width={size}
+          height={size}
+          className="absolute"
+          viewBox={`0 0 ${size} ${size}`}
+        >
+          {/* Fondo verde del círculo */}
+          <circle
+            cx={center}
+            cy={center}
+            r={radius + strokeWidth/2 + 8}
+            fill="#10B981"
+            className="drop-shadow-md"
+          />
+
+          {/* Círculo de borde azul */}
+          <circle
+            cx={center}
+            cy={center}
+            r={radius}
+            stroke="#2563EB"
+            strokeWidth={strokeWidth}
+            fill="none"
+            className="opacity-40"
+          />
+        </svg>
+
+        {/* Contenido central */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className="text-3xl font-bold text-white leading-none drop-shadow-lg">0</div>
+          <div className="text-xs text-white/90 mt-1 drop-shadow-sm font-medium">DÍAS</div>
+          <div className="text-sm text-white/80 mt-1 drop-shadow-sm">Meta: 3</div>
+        </div>
+      </motion.div>
     );
   }
 
@@ -447,18 +497,6 @@ export const StreakCounterFinZen: React.FC<{
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   // Animaciones
-  const containerVariants = {
-    initial: { scale: 0, opacity: 0 },
-    animate: { 
-      scale: 1, 
-      opacity: 1,
-      transition: { 
-        type: 'spring' as const, 
-        stiffness: 300, 
-        damping: 20
-      }
-    }
-  };
 
   const flameVariants = {
     idle: {
