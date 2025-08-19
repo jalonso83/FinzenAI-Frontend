@@ -304,6 +304,7 @@ const Dashboard = () => {
                   <FinScoreProgressBar
                     currentScore={finScore.currentScore}
                     level={finScore.level}
+                    levelName={finScore.levelName}
                     pointsToNextLevel={finScore.pointsToNextLevel}
                     animate={true}
                     className="w-full max-w-sm"
@@ -369,7 +370,7 @@ const Dashboard = () => {
                       <span className="mr-1">
                         {(streak?.currentStreak || 0) >= 7 ? '🔥' : (streak?.currentStreak || 0) >= 3 ? '📈' : '📊'}
                       </span>
-                      {(streak?.currentStreak || 0) >= 7 ? 'En racha' : (streak?.currentStreak || 0) >= 3 ? 'Progreso' : 'Inicio'}
+                      {(streak?.currentStreak || 0) >= 7 ? 'En racha' : (streak?.currentStreak || 0) >= 3 ? 'Progreso' : 'Estableciendo'}
                     </div>
                   </div>
                 </div>

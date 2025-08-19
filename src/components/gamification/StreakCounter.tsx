@@ -575,23 +575,6 @@ export const StreakCounterFinZen: React.FC<{
 
       {/* Contenido central */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        {/* Ícono de llama animada */}
-        <motion.div
-          animate={animate ? flameVariants.idle : undefined}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            repeatType: 'reverse',
-            ease: 'easeInOut'
-          }}
-          className="mb-1"
-        >
-          <Flame 
-            className="text-red-500 drop-shadow-lg" 
-            size={size * 0.16}
-            fill="currentColor"
-          />
-        </motion.div>
 
         {/* Número de días */}
         <motion.div
@@ -605,17 +588,17 @@ export const StreakCounterFinZen: React.FC<{
           }}
           className="text-center"
         >
-          <div className="text-3xl font-bold text-white leading-none drop-shadow-lg">
+          <div className="text-2xl font-bold text-white leading-none drop-shadow-lg">
             {animate ? (
               <AnimatedStreakNumber value={streak.currentStreak} />
             ) : (
               streak.currentStreak
             )}
           </div>
-          <div className="text-xs text-white/90 mt-1 drop-shadow-sm font-medium">
+          <div className="text-xs text-white/90 mt-0.5 drop-shadow-sm font-medium">
             {streak.currentStreak === 1 ? 'DÍA' : 'DÍAS'}
           </div>
-          <div className="text-sm text-white/80 mt-1 drop-shadow-sm">
+          <div className="text-xs text-white/80 mt-0.5 drop-shadow-sm">
             Meta: {nextMilestone}
           </div>
         </motion.div>

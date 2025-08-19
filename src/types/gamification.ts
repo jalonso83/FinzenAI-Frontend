@@ -53,6 +53,7 @@ export interface GamificationEvent {
 export interface FinScore {
   currentScore: number;
   level: number;
+  levelName?: string;
   pointsToNextLevel: number;
   totalPointsEarned: number;
   rank?: number;

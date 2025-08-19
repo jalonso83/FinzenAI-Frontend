@@ -7,28 +7,36 @@ import { motion } from 'framer-motion';
 interface FinScoreProgressBarProps {
   currentScore: number;
   level: number;
+  levelName?: string;
   pointsToNextLevel: number;
   animate?: boolean;
   className?: string;
 }
 
-// Función para calcular puntos necesarios para un nivel
-const getPointsForLevel = (level: number): number => {
-  return Math.pow(level, 2) * 100;
+// Función para calcular rangos de niveles basados en Índice FinZen
+const getLevelRange = (level: number): { min: number; max: number } => {
+  switch (level) {
+    case 1: return { min: 0, max: 54 };
+    case 2: return { min: 55, max: 69 };
+    case 3: return { min: 70, max: 81 };
+    case 4: return { min: 82, max: 91 };
+    case 5: return { min: 92, max: 100 };
+    default: return { min: 0, max: 54 };
+  }
 };
 
 const FinScoreProgressBar: React.FC<FinScoreProgressBarProps> = ({
   currentScore,
   level,
+  levelName,
   pointsToNextLevel,
   animate = true,
   className
 }) => {
-  // Calcular progreso del nivel actual
-  const currentLevelPoints = getPointsForLevel(level - 1);
-  const nextLevelPoints = getPointsForLevel(level);
-  const progressInLevel = currentScore - currentLevelPoints;
-  const totalNeededInLevel = nextLevelPoints - currentLevelPoints;
+  // Calcular progreso del nivel actual con nueva escala
+  const currentLevelRange = getLevelRange(level);
+  const progressInLevel = currentScore - currentLevelRange.min;
+  const totalNeededInLevel = currentLevelRange.max - currentLevelRange.min + 1;
   const progressPercentage = (progressInLevel / totalNeededInLevel) * 100;
 
   return (
@@ -39,7 +47,7 @@ const FinScoreProgressBar: React.FC<FinScoreProgressBarProps> = ({
           NIVEL {level}
         </div>
         <div className="text-sm text-gray-600">
-          Índice FinZen (actualizado)
+          Índice FinZen - {levelName || 'Principiante'}
         </div>
       </div>
 
