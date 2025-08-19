@@ -433,16 +433,24 @@ export const StreakCounterFinZen: React.FC<{
   if (!streak || !streak.isActive || streak.currentStreak === 0) {
     const strokeWidth = 8;
     const radius = (size - strokeWidth) / 2;
+    const circumference = 2 * Math.PI * radius;
     const center = size / 2;
 
     return (
-      <div className={cn('relative inline-flex items-center justify-center', className)}>
-        {/* SVG para el círculo perfecto */}
+      <motion.div
+        variants={animate ? containerVariants : undefined}
+        initial={animate ? 'initial' : undefined}
+        animate={animate ? 'animate' : undefined}
+        whileHover={{ scale: animate ? 1.05 : undefined }}
+        className={cn('relative inline-flex items-center justify-center', className)}
+        style={{ width: size, height: size }}
+      >
+        {/* SVG para el anillo de progreso - IGUAL QUE LA VERSIÓN ACTIVA */}
         <svg
           width={size}
           height={size}
+          className="absolute transform -rotate-90"
           viewBox={`0 0 ${size} ${size}`}
-          className="drop-shadow-md"
         >
           {/* Fondo verde del círculo */}
           <circle
@@ -450,9 +458,21 @@ export const StreakCounterFinZen: React.FC<{
             cy={center}
             r={radius + strokeWidth/2 + 8}
             fill="#10B981"
+            className="drop-shadow-md"
           />
 
-          {/* Círculo de borde azul */}
+          {/* Círculo de fondo para el aro */}
+          <circle
+            cx={center}
+            cy={center}
+            r={radius}
+            stroke="#E5E7EB"
+            strokeWidth={strokeWidth}
+            fill="none"
+            className="opacity-40"
+          />
+
+          {/* Círculo de progreso azul (sin progreso para 0) */}
           <circle
             cx={center}
             cy={center}
@@ -460,17 +480,32 @@ export const StreakCounterFinZen: React.FC<{
             stroke="#2563EB"
             strokeWidth={strokeWidth}
             fill="none"
-            opacity="0.4"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={circumference}
+            className="drop-shadow-sm"
           />
         </svg>
 
         {/* Contenido central */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div className="text-3xl font-bold text-white leading-none drop-shadow-lg">0</div>
-          <div className="text-xs text-white/90 mt-1 drop-shadow-sm font-medium">DÍAS</div>
-          <div className="text-sm text-white/80 mt-1 drop-shadow-sm">Meta: 3</div>
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{
+              duration: animate ? 0.8 : 0,
+              delay: animate ? 0.5 : 0,
+              type: 'spring',
+              stiffness: 200
+            }}
+            className="text-center"
+          >
+            <div className="text-3xl font-bold text-white leading-none drop-shadow-lg">0</div>
+            <div className="text-xs text-white/90 mt-1 drop-shadow-sm font-medium">DÍAS</div>
+            <div className="text-sm text-white/80 mt-1 drop-shadow-sm">Meta: 3</div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
