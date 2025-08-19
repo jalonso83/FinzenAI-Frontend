@@ -420,14 +420,13 @@ export const StreakCounterFinZen: React.FC<{
     return (
       <div className={cn(
         'relative flex flex-col items-center justify-center rounded-full',
-        'bg-gray-200 border-4 border-gray-300 shadow-md',
+        'bg-green-500 border-4 border-blue-500 shadow-md',
         className
       )}
       style={{ width: size, height: size }}
       >
-        <Calendar className="text-gray-400 mb-2" size={size * 0.25} />
-        <div className="text-xl font-bold text-gray-500">0</div>
-        <div className="text-xs text-gray-400 font-medium">DÍAS</div>
+        <div className="text-2xl font-bold text-white">0</div>
+        <div className="text-xs text-white/90 font-medium">DÍAS</div>
       </div>
     );
   }
@@ -575,7 +574,6 @@ export const StreakCounterFinZen: React.FC<{
 
       {/* Contenido central */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-
         {/* Número de días */}
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
@@ -588,17 +586,17 @@ export const StreakCounterFinZen: React.FC<{
           }}
           className="text-center"
         >
-          <div className="text-2xl font-bold text-white leading-none drop-shadow-lg">
+          <div className="text-3xl font-bold text-white leading-none drop-shadow-lg">
             {animate ? (
               <AnimatedStreakNumber value={streak.currentStreak} />
             ) : (
               streak.currentStreak
             )}
           </div>
-          <div className="text-xs text-white/90 mt-0.5 drop-shadow-sm font-medium">
+          <div className="text-xs text-white/90 mt-1 drop-shadow-sm font-medium">
             {streak.currentStreak === 1 ? 'DÍA' : 'DÍAS'}
           </div>
-          <div className="text-xs text-white/80 mt-0.5 drop-shadow-sm">
+          <div className="text-sm text-white/80 mt-1 drop-shadow-sm">
             Meta: {nextMilestone}
           </div>
         </motion.div>
