@@ -436,19 +436,13 @@ export const StreakCounterFinZen: React.FC<{
     const center = size / 2;
 
     return (
-      <motion.div
-        variants={animate ? containerVariants : undefined}
-        initial={animate ? 'initial' : undefined}
-        animate={animate ? 'animate' : undefined}
-        className={cn('relative inline-flex items-center justify-center', className)}
-        style={{ width: size, height: size }}
-      >
-        {/* SVG para el círculo */}
+      <div className={cn('relative inline-flex items-center justify-center', className)}>
+        {/* SVG para el círculo perfecto */}
         <svg
           width={size}
           height={size}
-          className="absolute"
           viewBox={`0 0 ${size} ${size}`}
+          className="drop-shadow-md"
         >
           {/* Fondo verde del círculo */}
           <circle
@@ -456,7 +450,6 @@ export const StreakCounterFinZen: React.FC<{
             cy={center}
             r={radius + strokeWidth/2 + 8}
             fill="#10B981"
-            className="drop-shadow-md"
           />
 
           {/* Círculo de borde azul */}
@@ -467,7 +460,7 @@ export const StreakCounterFinZen: React.FC<{
             stroke="#2563EB"
             strokeWidth={strokeWidth}
             fill="none"
-            className="opacity-40"
+            opacity="0.4"
           />
         </svg>
 
@@ -477,7 +470,7 @@ export const StreakCounterFinZen: React.FC<{
           <div className="text-xs text-white/90 mt-1 drop-shadow-sm font-medium">DÍAS</div>
           <div className="text-sm text-white/80 mt-1 drop-shadow-sm">Meta: 3</div>
         </div>
-      </motion.div>
+      </div>
     );
   }
 

@@ -105,61 +105,34 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
         };
         
         recognition.onresult = (event: any) => {
-          console.log('🎤 ===== EVENTO ONRESULT EJECUTADO =====');
-          console.log('🎤 Número de resultados:', event.results.length);
+          console.log('🎤 Procesando resultado de voz...');
           
           let finalTranscript = '';
-          let interimTranscript = '';
-          let hasValidResult = false;
           
-          // Procesar todos los resultados desde el último índice procesado
+          // Procesar solo los resultados finales para evitar conflictos
           for (let i = event.resultIndex; i < event.results.length; i++) {
             const result = event.results[i];
-            const transcript = result[0].transcript.trim();
-            const confidence = result[0].confidence;
-            
-            console.log(`🎤 Resultado ${i}:`, {
-              transcript: transcript,
-              isFinal: result.isFinal,
-              confidence: confidence
-            });
-            
-            if (result.isFinal && transcript) {
-              finalTranscript += transcript + ' ';
-              hasValidResult = true;
-              console.log('🎤 ✅ Transcripción FINAL encontrada:', transcript);
-              
-              // Con continuous=true, detener manualmente cuando tengamos resultado final
-              console.log('🎤 🛑 Deteniendo reconocimiento después de resultado final');
-              if (recognitionRef.current) {
-                recognitionRef.current.stop();
+            if (result.isFinal) {
+              const transcript = result[0].transcript.trim();
+              if (transcript) {
+                finalTranscript += transcript + ' ';
+                console.log('🎤 ✅ Transcripción final:', transcript);
               }
-            } else if (transcript) {
-              interimTranscript += transcript + ' ';
-              hasValidResult = true;
-              console.log('🎤 ⏳ Transcripción INTERMEDIA:', transcript);
             }
           }
           
-          // Usar transcripción final si existe, sino la intermedia
-          const textToUse = (finalTranscript || interimTranscript).trim();
-          
-          console.log('🎤 Texto a usar:', textToUse);
-          
-          if (textToUse) {
-            console.log('🎤 ✅ ESTABLECIENDO TEXTO EN INPUT:', textToUse);
-            setInput(textToUse);
+          // Si hay transcripción final, usarla
+          if (finalTranscript.trim()) {
+            const cleanText = finalTranscript.trim();
+            setInput(cleanText);
             setVoiceError(null);
+            console.log('🎤 ✅ Texto establecido en input:', cleanText);
             
-            if (finalTranscript.trim()) {
-              console.log('🎤 ✅ Resultado final - marcando como completado');
-              setIsProcessingAudio(false);
+            // Detener reconocimiento después de obtener resultado
+            if (recognitionRef.current) {
+              recognitionRef.current.stop();
             }
-          } else {
-            console.log('🎤 ❌ No hay texto válido para establecer');
           }
-          
-          console.log('🎤 ===== FIN EVENTO ONRESULT =====');
         };
         
         recognition.onerror = (event: any) => {
@@ -229,7 +202,6 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
 
         recognition.onend = () => {
           console.log('🎤 Reconocimiento terminado');
-          console.log('🎤 Input actual:', input);
           
           // Limpiar timeout
           if (timeoutRef.current) {
@@ -244,15 +216,7 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
           }
           
           setIsRecording(false);
-          setIsProcessingAudio(false); // Siempre detener el procesamiento
-          
-          // Debug: verificar si hay algo en el input después del reconocimiento
-          setTimeout(() => {
-            const currentInput = document.querySelector('input[type="text"]') as HTMLInputElement;
-            if (currentInput) {
-              console.log('🎤 Valor del input después de reconocimiento:', currentInput.value);
-            }
-          }, 100);
+          setIsProcessingAudio(false);
         };
         
         recognitionRef.current = recognition;
@@ -812,9 +776,9 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
               className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary pr-12"
               placeholder={
                 submitting ? 'Zenio está procesando...' : 
-                isRecording ? 'Escuchando...' :
-                isProcessingAudio ? 'Transcribiendo...' :
-                'Escribe o habla tu mensaje...'
+                isRecording ? `🎤 Escuchando... (${recordingTime}s)` :
+                isProcessingAudio ? '✨ Transcribiendo...' :
+                'Escribe tu mensaje o usa el micrófono 🎤'
               }
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -822,18 +786,30 @@ const ZenioChat: React.FC<ZenioChatProps> = ({ onClose, isOnboarding = false, in
               readOnly={submitting || isRecording || isProcessingAudio}
             />
             
-            {/* Microphone Button - Deshabilitado */}
+            {/* Microphone Button */}
             {isAudioSupported && (
               <button
                 type="button"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-lg bg-gray-300 text-gray-500 cursor-not-allowed opacity-50"
-                disabled={true}
-                title="Funcionalidad de voz no disponible"
+                onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
+                className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-lg transition-colors ${
+                  isRecording 
+                    ? 'bg-red-500 text-white animate-pulse' 
+                    : 'bg-primary text-white hover:bg-primary/90'
+                }`}
+                disabled={submitting}
+                title={isRecording ? 'Detener grabación' : 'Grabar mensaje de voz'}
               >
-                <Mic size={18} />
+                {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
               </button>
             )}
           </div>
+          
+          {/* Error de voz */}
+          {voiceError && (
+            <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+              ⚠️ {voiceError}
+            </div>
+          )}
           
           <button
             type="submit"
