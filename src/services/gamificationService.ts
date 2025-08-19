@@ -289,13 +289,12 @@ export class GamificationService {
    * Obtiene la racha actual del usuario
    */
   async getUserStreak(): Promise<UserStreak | null> {
-    const cacheKey = 'user-streak';
-    const cached = this.cache.get<UserStreak>(cacheKey);
-    if (cached) return cached;
+    // TEMPORAL: Invalidar cache completamente para debug
+    this.clearCache();
 
     try {
       const response = await withRetry(async () => {
-        const res = await api.get<StreakResponse>('/gamification/streak');
+        const res = await api.get<StreakResponse>(`/gamification/streak?t=${Date.now()}`);
         return res.data;
       });
 
@@ -304,7 +303,7 @@ export class GamificationService {
       }
 
       const streak = response.data;
-      this.cache.set(cacheKey, streak, CACHE_DURATION / 2); // Cache más corto para racha
+      console.log('🔄 RACHA DEL BACKEND:', streak);
       
       return streak;
     } catch (error) {
