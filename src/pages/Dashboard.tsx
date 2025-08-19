@@ -334,7 +334,7 @@ const Dashboard = () => {
               </div>
               
               {/* Columna 3: Racha de Días */}
-              <div className="flex justify-center lg:justify-end">
+              <div className="flex justify-center">
                 <div className="bg-white rounded-lg p-4 w-full max-w-sm text-center">
                   {/* Header */}
                   <div className="mb-4">
@@ -345,7 +345,7 @@ const Dashboard = () => {
                   </div>
 
                   {/* Contenido principal */}
-                  <div className="mb-3">
+                  <div className="mb-3 flex justify-center">
                     <StreakCounterFinZen 
                       streak={streak || undefined}
                       size={100}
