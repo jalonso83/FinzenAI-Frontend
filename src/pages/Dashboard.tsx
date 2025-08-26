@@ -214,8 +214,19 @@ const Dashboard = () => {
     return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
   });
   
+  console.log('=== DEBUG BALANCE ACTUAL ===');
+  console.log('Todas las transacciones cargadas:', allTransactions.length);
+  console.log('Transacciones del mes actual:', currentMonthTransactions.length);
+  console.log('Mes actual:', currentMonth, '(', ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][currentMonth], ')');
+  console.log('Año actual:', currentYear);
+  
   const ingresos = currentMonthTransactions.filter(t => t.type === 'INCOME').reduce((acc, t) => acc + t.amount, 0);
   const gastos = currentMonthTransactions.filter(t => t.type === 'EXPENSE').reduce((acc, t) => acc + t.amount, 0);
+  
+  console.log('Ingresos del mes actual:', ingresos);
+  console.log('Gastos del mes actual:', gastos);
+  console.log('================================');
+  
   const saldoTotal = ingresos - gastos;
 
   // Calcular saldo mes anterior para mostrar mejora
@@ -486,10 +497,16 @@ const Dashboard = () => {
                 return txMonth === currentMonth && txYear === currentYear;
               });
               
-              console.log('Transacciones del mes actual (todas):', filtered.length);
+              console.log('Transacciones del mes actual (gráfico):', filtered.length);
               const monthlyExpenses = filtered.filter(t => t.type === 'EXPENSE');
               const totalMonthlyExpenses = monthlyExpenses.reduce((sum, t) => sum + t.amount, 0);
-              console.log('Gastos del mes actual (calculados correctamente):', totalMonthlyExpenses);
+              console.log('Gastos del mes actual (gráfico):', totalMonthlyExpenses);
+              
+              // COMPARAR CON EL BALANCE ACTUAL
+              console.log('🔍 COMPARACIÓN:');
+              console.log('- Balance Actual gastos:', gastos);
+              console.log('- Gráfico gastos:', totalMonthlyExpenses);
+              console.log('- ¿Son iguales?', gastos === totalMonthlyExpenses);
               console.log('===============================');
               
               return filtered;

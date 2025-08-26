@@ -162,8 +162,8 @@ const ExpensesPieChart: React.FC<ExpensesPieChartProps> = ({ transactions, categ
     },
   };
 
-  // Calcular total de gastos
-  const totalExpenses = expensesByCategory.reduce((sum, item) => sum + item.total, 0);
+  // Calcular total de gastos (TODOS, no solo las 8 categorías mostradas)
+  const totalExpenses = transactions.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0);
 
   if (expensesByCategory.length === 0) {
     return (
