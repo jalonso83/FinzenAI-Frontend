@@ -457,9 +457,18 @@ const Dashboard = () => {
 
       {/* Gráfico de Gastos por Categoría */}
       <div className="card bg-card border border-border rounded-xl mb-6">
-        <h3 className="card-title text-text font-semibold mb-4 ml-5">Gastos por Categoría</h3>
+        <h3 className="card-title text-text font-semibold mb-4 ml-5">Gastos por Categoría - Este Mes</h3>
         <div className="px-6 pb-6">
-          <ExpensesPieChart transactions={transactions} categories={categories} />
+          <ExpensesPieChart 
+            transactions={transactions.filter(t => {
+              // Filtrar solo transacciones del mes actual
+              const now = new Date();
+              const transactionDate = new Date(t.date);
+              return transactionDate.getMonth() === now.getMonth() && 
+                     transactionDate.getFullYear() === now.getFullYear();
+            })} 
+            categories={categories} 
+          />
         </div>
       </div>
 
