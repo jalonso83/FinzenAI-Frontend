@@ -38,33 +38,20 @@ const Dashboard = () => {
   // Hook para escuchar eventos de gamificación y mostrar toasts
   useGamificationEventListener();
 
-  // Estados para datos del dashboard con cálculos consistentes
-  const [dashboardTotals, setDashboardTotals] = useState<any>(null);
-
   // Fetch de datos
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // USAR ENDPOINT ESPECÍFICO CON CÁLCULOS CONSISTENTES
-      const [
-        dashboardRes,
-        catRes,
-        budgetRes,
-        goalsRes
-      ] = await Promise.all([
-        api.get('/reports/dashboard-totals'), // Nuevo endpoint con cálculos precisos
-        categoriesAPI.getAll(),
-        budgetsAPI.getAll(),
-        api.get('/goals')
-      ]);
-      
-      setDashboardTotals(dashboardRes.data);
-      setTransactions(dashboardRes.data.recentTransactions || []); // Usar transacciones del dashboard
+      // OBTENER TODAS LAS TRANSACCIONES para cálculos precisos
+      const txRes = await transactionsAPI.getAll({ limit: 5000 }); // Límite muy alto para obtener todas
+      const catRes = await categoriesAPI.getAll();
+      const budgetRes = await budgetsAPI.getAll();
+      const goalsRes = await api.get('/goals');
+      setTransactions(txRes.transactions || []);
       setCategories(catRes);
       setBudgets(budgetRes.budgets || []);
       setGoals(goalsRes.data || []);
     } catch (error) {
-      setDashboardTotals(null);
       setTransactions([]);
       setCategories([]);
       setBudgets([]);
@@ -469,7 +456,14 @@ const Dashboard = () => {
               const currentMonth = now.getMonth();
               const currentYear = now.getFullYear();
               
-              console.log('Mes actual:', currentMonth, 'Año actual:', currentYear);
+              console.log('Fecha completa del sistema:', now);
+              console.log('Mes getCurrentMonth():', currentMonth);
+              console.log('Año actual:', currentYear);
+              
+              // Verificar qué mes es realmente
+              const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+              console.log('Mes real según JavaScript:', monthNames[currentMonth]);
+              console.log('¿Es Agosto?', monthNames[currentMonth] === 'Agosto');
               
               const filtered = transactions.filter(t => {
                 const transactionDate = new Date(t.date);
