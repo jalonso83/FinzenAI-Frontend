@@ -204,13 +204,21 @@ const Dashboard = () => {
   // Utilidades para mostrar nombre e icono de categoría
   const getCategoryById = (id: string) => categories.find(c => c.id === id);
 
-  // Calcular totales usando TODAS las transacciones
-  const ingresos = allTransactions.filter(t => t.type === 'INCOME').reduce((acc, t) => acc + t.amount, 0);
-  const gastos = allTransactions.filter(t => t.type === 'EXPENSE').reduce((acc, t) => acc + t.amount, 0);
+  // Calcular totales del MES ACTUAL solamente
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  
+  const currentMonthTransactions = allTransactions.filter(t => {
+    const transactionDate = new Date(t.date);
+    return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
+  });
+  
+  const ingresos = currentMonthTransactions.filter(t => t.type === 'INCOME').reduce((acc, t) => acc + t.amount, 0);
+  const gastos = currentMonthTransactions.filter(t => t.type === 'EXPENSE').reduce((acc, t) => acc + t.amount, 0);
   const saldoTotal = ingresos - gastos;
 
   // Calcular saldo mes anterior para mostrar mejora
-  const now = new Date();
   const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
   const ingresosPrev = transactions.filter(t => {
@@ -386,7 +394,7 @@ const Dashboard = () => {
               <div className="grid grid-cols-2 gap-2 text-center">
                 <div>
                   <p className="text-xs text-gray-600">Transacciones</p>
-                  <p className="text-sm font-bold text-blue-600">{transactions.length}</p>
+                  <p className="text-sm font-bold text-blue-600">{currentMonthTransactions.length}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-600">Presupuestos</p>
