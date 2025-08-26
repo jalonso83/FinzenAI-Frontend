@@ -460,13 +460,46 @@ const Dashboard = () => {
         <h3 className="card-title text-text font-semibold mb-4 ml-5">Gastos por Categoría - Este Mes</h3>
         <div className="px-6 pb-6">
           <ExpensesPieChart 
-            transactions={transactions.filter(t => {
-              // Filtrar solo transacciones del mes actual
+            transactions={(() => {
+              // Debug: ver todas las transacciones y fechas
+              console.log('=== DEBUG GRÁFICO GASTOS ===');
+              console.log('Total transacciones cargadas:', transactions.length);
+              
               const now = new Date();
-              const transactionDate = new Date(t.date);
-              return transactionDate.getMonth() === now.getMonth() && 
-                     transactionDate.getFullYear() === now.getFullYear();
-            })} 
+              const currentMonth = now.getMonth();
+              const currentYear = now.getFullYear();
+              
+              console.log('Mes actual:', currentMonth, 'Año actual:', currentYear);
+              
+              const filtered = transactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                const txMonth = transactionDate.getMonth();
+                const txYear = transactionDate.getFullYear();
+                
+                // Log algunas transacciones para debug
+                if (transactions.indexOf(t) < 5) {
+                  console.log(`TX ${transactions.indexOf(t)}:`, {
+                    originalDate: t.date,
+                    parsedDate: transactionDate,
+                    month: txMonth,
+                    year: txYear,
+                    type: t.type,
+                    amount: t.amount,
+                    isCurrentMonth: txMonth === currentMonth && txYear === currentYear
+                  });
+                }
+                
+                return txMonth === currentMonth && txYear === currentYear;
+              });
+              
+              console.log('Transacciones del mes actual:', filtered.length);
+              const monthlyExpenses = filtered.filter(t => t.type === 'EXPENSE');
+              const totalMonthlyExpenses = monthlyExpenses.reduce((sum, t) => sum + t.amount, 0);
+              console.log('Gastos del mes actual:', totalMonthlyExpenses);
+              console.log('===============================');
+              
+              return filtered;
+            })()} 
             categories={categories} 
           />
         </div>
