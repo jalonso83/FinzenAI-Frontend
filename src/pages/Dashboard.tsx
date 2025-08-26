@@ -25,7 +25,8 @@ interface Goal {
 }
 
 const Dashboard = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]); // Para lista reciente (10)
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]); // Para cálculos (todas)
   const [categories, setCategories] = useState<Category[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -42,16 +43,29 @@ const Dashboard = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // OBTENER TODAS LAS TRANSACCIONES para cálculos precisos
-      const txRes = await transactionsAPI.getAll({ limit: 5000 }); // Límite muy alto para obtener todas
-      const catRes = await categoriesAPI.getAll();
-      const budgetRes = await budgetsAPI.getAll();
-      const goalsRes = await api.get('/goals');
-      setTransactions(txRes.transactions || []);
+      // Obtener dos conjuntos de datos:
+      // 1. Todas las transacciones para cálculos
+      // 2. Solo las 10 recientes para mostrar en la lista
+      const [allTxRes, recentTxRes, catRes, budgetRes, goalsRes] = await Promise.all([
+        transactionsAPI.getAll({ limit: 5000 }), // Todas para cálculos
+        transactionsAPI.getAll({ limit: 10 }), // Solo 10 recientes para mostrar
+        categoriesAPI.getAll(),
+        budgetsAPI.getAll(),
+        api.get('/goals')
+      ]);
+      
+      console.log('=== DASHBOARD RECIBE ===');
+      console.log('Todas las transacciones:', allTxRes.transactions?.length);
+      console.log('Transacciones recientes:', recentTxRes.transactions?.length);
+      console.log('========================');
+      
+      setAllTransactions(allTxRes.transactions || []); // Para cálculos del gráfico
+      setTransactions(recentTxRes.transactions || []); // Para lista reciente
       setCategories(catRes);
       setBudgets(budgetRes.budgets || []);
       setGoals(goalsRes.data || []);
     } catch (error) {
+      setAllTransactions([]);
       setTransactions([]);
       setCategories([]);
       setBudgets([]);
@@ -190,15 +204,10 @@ const Dashboard = () => {
   // Utilidades para mostrar nombre e icono de categoría
   const getCategoryById = (id: string) => categories.find(c => c.id === id);
 
-  // Usar datos calculados del backend para consistencia total
-  const ingresos = dashboardTotals?.totals?.totalIncome || 0;
-  const gastos = dashboardTotals?.totals?.totalExpenses || 0;
-  const saldoTotal = dashboardTotals?.totals?.totalBalance || 0;
-
-  // Datos del mes actual para comparación
-  const ingresosActuales = dashboardTotals?.totals?.monthlyIncome || 0;
-  const gastosActuales = dashboardTotals?.totals?.monthlyExpenses || 0;
-  const saldoActual = dashboardTotals?.totals?.monthlyBalance || 0;
+  // Calcular totales usando TODAS las transacciones
+  const ingresos = allTransactions.filter(t => t.type === 'INCOME').reduce((acc, t) => acc + t.amount, 0);
+  const gastos = allTransactions.filter(t => t.type === 'EXPENSE').reduce((acc, t) => acc + t.amount, 0);
+  const saldoTotal = ingresos - gastos;
 
   // Calcular saldo mes anterior para mostrar mejora
   const now = new Date();
@@ -448,9 +457,9 @@ const Dashboard = () => {
         <div className="px-6 pb-6">
           <ExpensesPieChart 
             transactions={(() => {
-              // Debug: ver todas las transacciones y fechas
+              // USAR TODAS LAS TRANSACCIONES para cálculos correctos
               console.log('=== DEBUG GRÁFICO GASTOS ===');
-              console.log('Total transacciones cargadas:', transactions.length);
+              console.log('Total transacciones para cálculos:', allTransactions.length);
               
               const now = new Date();
               const currentMonth = now.getMonth();
@@ -460,36 +469,19 @@ const Dashboard = () => {
               console.log('Mes getCurrentMonth():', currentMonth);
               console.log('Año actual:', currentYear);
               
-              // Verificar qué mes es realmente
-              const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-              console.log('Mes real según JavaScript:', monthNames[currentMonth]);
-              console.log('¿Es Agosto?', monthNames[currentMonth] === 'Agosto');
-              
-              const filtered = transactions.filter(t => {
+              // Filtrar del mes actual usando TODAS las transacciones
+              const filtered = allTransactions.filter(t => {
                 const transactionDate = new Date(t.date);
                 const txMonth = transactionDate.getMonth();
                 const txYear = transactionDate.getFullYear();
                 
-                // Log algunas transacciones para debug
-                if (transactions.indexOf(t) < 5) {
-                  console.log(`TX ${transactions.indexOf(t)}:`, {
-                    originalDate: t.date,
-                    parsedDate: transactionDate,
-                    month: txMonth,
-                    year: txYear,
-                    type: t.type,
-                    amount: t.amount,
-                    isCurrentMonth: txMonth === currentMonth && txYear === currentYear
-                  });
-                }
-                
                 return txMonth === currentMonth && txYear === currentYear;
               });
               
-              console.log('Transacciones del mes actual:', filtered.length);
+              console.log('Transacciones del mes actual (todas):', filtered.length);
               const monthlyExpenses = filtered.filter(t => t.type === 'EXPENSE');
               const totalMonthlyExpenses = monthlyExpenses.reduce((sum, t) => sum + t.amount, 0);
-              console.log('Gastos del mes actual:', totalMonthlyExpenses);
+              console.log('Gastos del mes actual (calculados correctamente):', totalMonthlyExpenses);
               console.log('===============================');
               
               return filtered;
