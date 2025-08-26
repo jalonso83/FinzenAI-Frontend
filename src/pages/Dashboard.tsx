@@ -553,7 +553,14 @@ const Dashboard = () => {
             
             {/* Lista de presupuestos */}
             <div className="space-y-3">
-              {activeBudgets.slice(0, 3).map(budget => {
+              {activeBudgets
+                .sort((a, b) => {
+                  // Ordenar por nivel de gasto: más crítico primero
+                  const percentageA = a.amount > 0 ? ((a.spent || 0) / a.amount) * 100 : 0;
+                  const percentageB = b.amount > 0 ? ((b.spent || 0) / b.amount) * 100 : 0;
+                  return percentageB - percentageA; // Mayor porcentaje primero (más crítico)
+                })
+                .slice(0, 3).map(budget => {
                 const spent = budget.spent || 0;
                 const amount = budget.amount || 0;
                 const percentage = amount > 0 ? Math.min((spent / amount) * 100, 100) : 0;
