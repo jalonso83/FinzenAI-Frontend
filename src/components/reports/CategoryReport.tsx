@@ -776,7 +776,7 @@ const CategoryReport: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {reportData.categoryData.slice(0, 10).map((category) => (
+                    {reportData.categoryData.map((category) => (
                       <tr key={category.id} className="border-b border-gray-100">
                         <td className="py-2">
                           <div className="flex items-center gap-2">
