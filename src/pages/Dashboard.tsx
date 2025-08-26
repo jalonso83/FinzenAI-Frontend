@@ -38,19 +38,33 @@ const Dashboard = () => {
   // Hook para escuchar eventos de gamificación y mostrar toasts
   useGamificationEventListener();
 
+  // Estados para datos del dashboard con cálculos consistentes
+  const [dashboardTotals, setDashboardTotals] = useState<any>(null);
+
   // Fetch de datos
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const txRes = await transactionsAPI.getAll({ limit: 100 });
-      const catRes = await categoriesAPI.getAll();
-      const budgetRes = await budgetsAPI.getAll();
-      const goalsRes = await api.get('/goals');
-      setTransactions(txRes.transactions || []);
+      // USAR ENDPOINT ESPECÍFICO CON CÁLCULOS CONSISTENTES
+      const [
+        dashboardRes,
+        catRes,
+        budgetRes,
+        goalsRes
+      ] = await Promise.all([
+        api.get('/reports/dashboard-totals'), // Nuevo endpoint con cálculos precisos
+        categoriesAPI.getAll(),
+        budgetsAPI.getAll(),
+        api.get('/goals')
+      ]);
+      
+      setDashboardTotals(dashboardRes.data);
+      setTransactions(dashboardRes.data.recentTransactions || []); // Usar transacciones del dashboard
       setCategories(catRes);
       setBudgets(budgetRes.budgets || []);
       setGoals(goalsRes.data || []);
     } catch (error) {
+      setDashboardTotals(null);
       setTransactions([]);
       setCategories([]);
       setBudgets([]);
@@ -189,12 +203,17 @@ const Dashboard = () => {
   // Utilidades para mostrar nombre e icono de categoría
   const getCategoryById = (id: string) => categories.find(c => c.id === id);
 
-  // Calcular totales
-  const ingresos = transactions.filter(t => t.type === 'INCOME').reduce((acc, t) => acc + t.amount, 0);
-  const gastos = transactions.filter(t => t.type === 'EXPENSE').reduce((acc, t) => acc + t.amount, 0);
-  const saldoTotal = ingresos - gastos;
+  // Usar datos calculados del backend para consistencia total
+  const ingresos = dashboardTotals?.totals?.totalIncome || 0;
+  const gastos = dashboardTotals?.totals?.totalExpenses || 0;
+  const saldoTotal = dashboardTotals?.totals?.totalBalance || 0;
 
-  // Calcular saldo mes anterior
+  // Datos del mes actual para comparación
+  const ingresosActuales = dashboardTotals?.totals?.monthlyIncome || 0;
+  const gastosActuales = dashboardTotals?.totals?.monthlyExpenses || 0;
+  const saldoActual = dashboardTotals?.totals?.monthlyBalance || 0;
+
+  // Calcular saldo mes anterior para mostrar mejora
   const now = new Date();
   const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);

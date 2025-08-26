@@ -24,48 +24,113 @@ const Transactions = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Estados para paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalTransactions, setTotalTransactions] = useState(0);
+  const itemsPerPage = 50; // Mostrar 50 transacciones por página
 
   // Hook para escuchar eventos de gamificación y mostrar toasts
   useGamificationEventListener();
 
-  const fetchData = async () => {
+  const fetchData = async (page: number = currentPage, resetPage: boolean = false) => {
     setLoading(true);
     try {
-      const txRes = await transactionsAPI.getAll();
-      const catRes = await categoriesAPI.getAll();
+      // Construir filtros para la API
+      const params: any = {
+        page: resetPage ? 1 : page,
+        limit: itemsPerPage
+      };
+
+      // Aplicar filtros si están seleccionados
+      if (typeFilter !== 'all') {
+        params.type = typeFilter.toUpperCase();
+      }
+      if (categoryFilter !== 'all') {
+        params.category_id = categoryFilter;
+      }
+
+      // Aplicar filtro de período
+      if (periodFilter !== 'all') {
+        const now = new Date();
+        let startDate, endDate;
+
+        switch (periodFilter) {
+          case 'thisMonth':
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            break;
+          case 'lastMonth':
+            startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+            break;
+          case 'last3Months':
+            startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+            endDate = new Date();
+            break;
+          case 'thisYear':
+            startDate = new Date(now.getFullYear(), 0, 1);
+            endDate = new Date();
+            break;
+        }
+
+        if (startDate && endDate) {
+          params.startDate = startDate.toISOString();
+          params.endDate = endDate.toISOString();
+        }
+      }
+
+      const [txRes, catRes] = await Promise.all([
+        transactionsAPI.getAll(params),
+        categoriesAPI.getAll()
+      ]);
+
       setTransactions(txRes.transactions || []);
+      setTotalTransactions(txRes.pagination?.total || 0);
+      setTotalPages(txRes.pagination?.pages || 1);
+      setCurrentPage(resetPage ? 1 : page);
       setCategories(catRes);
-      console.log('Fetch ejecutado: categorías:', catRes);
+      
+      console.log('Fetch ejecutado - Página:', resetPage ? 1 : page, 'Total:', txRes.pagination?.total);
     } catch (err) {
       setError('Error al cargar datos');
+      console.error('Error fetching data:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  // useEffect para cargar datos solo una vez
+  // useEffect para cargar datos inicialmente
   useEffect(() => {
-    fetchData();
+    fetchData(1, true);
   }, []);
+
+  // useEffect para recargar cuando cambian los filtros
+  useEffect(() => {
+    if (categories.length > 0) { // Solo ejecutar después de que las categorías estén cargadas
+      fetchData(1, true); // Resetear a página 1 cuando cambian filtros
+    }
+  }, [typeFilter, categoryFilter, periodFilter]);
 
   // Listener para refrescado desde Zenio
   useEffect(() => {
     // Handler para refrescar desde Zenio
     const handleZenioTransactionCreated = () => {
-      fetchData();
+      fetchData(1, true); // Ir a la primera página para ver la nueva transacción
     };
     
     const handleZenioTransactionUpdated = () => {
-      fetchData();
+      fetchData(currentPage); // Mantener página actual
     };
     
     const handleZenioTransactionDeleted = () => {
-      fetchData();
+      fetchData(currentPage); // Mantener página actual
     };
     
     // Handler para refrescar cuando se actualizan presupuestos (por si las transacciones los afectan)
     const handleBudgetsUpdated = () => {
-      fetchData();
+      fetchData(currentPage); // Mantener página actual
     };
     
     window.addEventListener('zenio-transaction-created', handleZenioTransactionCreated);
@@ -112,69 +177,14 @@ const Transactions = () => {
     );
   };
 
-  // Filtrar transacciones según los filtros seleccionados
-  const getFilteredTransactions = (): Transaction[] => {
-    let filtered = [...transactions];
-    
-    // Filtrar por tipo
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(t => t.type === typeFilter);
-    }
-    
-    // Filtrar por categoría
-    if (categoryFilter !== 'all') {
-      filtered = filtered.filter(t => t.category.id === categoryFilter);
-    }
-    
-    // Filtrar por periodo
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    let startDate: Date;
-    
-    switch (periodFilter) {
-      case 'all':
-        return filtered;
-      case 'this-month':
-        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-        filtered = filtered.filter(t => {
-          const transactionDate = parseDate(t.date);
-          return transactionDate >= startDate;
-        });
-        return filtered;
-      case 'last-month':
-        startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
-        filtered = filtered.filter(t => {
-          const transactionDate = parseDate(t.date);
-          return transactionDate >= startDate && transactionDate <= endOfLastMonth;
-        });
-        return filtered;
-      case '3-months':
-        startDate = new Date(today.getFullYear(), today.getMonth() - 3, 1);
-        filtered = filtered.filter(t => {
-          const transactionDate = parseDate(t.date);
-          return transactionDate >= startDate;
-        });
-        return filtered;
-      case 'year':
-        startDate = new Date(today.getFullYear(), 0, 1);
-        filtered = filtered.filter(t => {
-          const transactionDate = parseDate(t.date);
-          return transactionDate >= startDate;
-        });
-        return filtered;
-      default:
-        return filtered;
-    }
-  };
+  // Los filtros ahora se aplican en el backend con paginación
   
   // CRUD locales
   const handleCreateTransaction = async (data: any) => {
     setLoading(true);
     try {
       const response = await transactionsAPI.create(data);
-      const txRes = await transactionsAPI.getAll();
-      setTransactions(txRes.transactions || []);
+      await fetchData(1, true); // Ir a primera página para ver nueva transacción
       toast.success('¡Transacción creada!');
       
       // Esperar a que el backend procese la gamificación y obtener puntos REALES
@@ -211,8 +221,7 @@ const Transactions = () => {
     setLoading(true);
     try {
       await transactionsAPI.update(id, data);
-      const txRes = await transactionsAPI.getAll();
-      setTransactions(txRes.transactions || []);
+      await fetchData(currentPage); // Mantener página actual después de editar
       toast.success('¡Transacción actualizada!');
       window.dispatchEvent(new Event('budgets-updated'));
     } catch {
@@ -226,7 +235,7 @@ const Transactions = () => {
       setLoading(true);
       try {
         await transactionsAPI.delete(id);
-        setTransactions(transactions.filter(t => t.id !== id));
+        await fetchData(currentPage); // Recargar página actual después de eliminar
         toast.success('¡Transacción eliminada!');
         window.dispatchEvent(new Event('budgets-updated'));
       } catch {
@@ -285,9 +294,28 @@ const Transactions = () => {
     setEditTransaction(transaction);
     setShowForm(true);
   };
+
+  // Funciones de paginación
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages && page !== currentPage) {
+      fetchData(page);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      goToPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      goToPage(currentPage + 1);
+    }
+  };
   
-  const filteredTransactions = getFilteredTransactions();
-  const groupedTransactions = groupTransactionsByDate(filteredTransactions);
+  // Ya no necesitamos filtrar localmente, el backend lo hace con paginación
+  const groupedTransactions = groupTransactionsByDate(transactions);
   
   return (
     <div className="min-h-screen bg-background px-4 md:px-8 py-6">
@@ -353,10 +381,10 @@ const Transactions = () => {
               onChange={(e) => setPeriodFilter(e.target.value)}
             >
               <option value="all">Todas</option>
-              <option value="this-month">Este mes</option>
-              <option value="last-month">Mes pasado</option>
-              <option value="3-months">Últimos 3 meses</option>
-              <option value="year">Este año</option>
+              <option value="thisMonth">Este mes</option>
+              <option value="lastMonth">Mes pasado</option>
+              <option value="last3Months">Últimos 3 meses</option>
+              <option value="thisYear">Este año</option>
             </select>
           </div>
         </div>
@@ -420,6 +448,63 @@ const Transactions = () => {
             </div>
           )}
         </div>
+
+        {/* Información de paginación y controles */}
+        {!loading && transactions.length > 0 && (
+          <div className="pagination-container">
+            <div className="pagination-info">
+              <p>
+                Mostrando {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalTransactions)} de {totalTransactions} transacciones
+              </p>
+            </div>
+            
+            {totalPages > 1 && (
+              <div className="pagination-controls">
+                <button 
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1 || loading}
+                  className="pagination-button"
+                >
+                  ← Anterior
+                </button>
+                
+                <div className="pagination-numbers">
+                  {[...Array(Math.min(5, totalPages))].map((_, index) => {
+                    let pageNumber;
+                    if (totalPages <= 5) {
+                      pageNumber = index + 1;
+                    } else if (currentPage <= 3) {
+                      pageNumber = index + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNumber = totalPages - 4 + index;
+                    } else {
+                      pageNumber = currentPage - 2 + index;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNumber}
+                        onClick={() => goToPage(pageNumber)}
+                        disabled={loading}
+                        className={`pagination-number ${pageNumber === currentPage ? 'active' : ''}`}
+                      >
+                        {pageNumber}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <button 
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages || loading}
+                  className="pagination-button"
+                >
+                  Siguiente →
+                </button>
+              </div>
+            )}
+          </div>
+        )}
         
         {showForm && (
           <TransactionFormWeb
