@@ -72,7 +72,7 @@ const ExpensesPieChart: React.FC<ExpensesPieChartProps> = ({ transactions, categ
         };
       })
       .sort((a, b) => b.total - a.total)
-      .slice(0, 8); // Mostrar solo las 8 categorías con más gastos
+      // Mostrar TODAS las categorías que tengan gastos
 
     // Asignar colores únicos basados en el índice
     return sortedCategories.map((item, index) => ({
