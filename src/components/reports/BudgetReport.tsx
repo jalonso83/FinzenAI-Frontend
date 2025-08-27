@@ -547,41 +547,55 @@ const BudgetReport: React.FC = () => {
                 {reportData.insights.bestBudget && (
                   <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                     <div>
-                      <p className="font-medium text-green-900">Mejor Control</p>
+                      <p className="font-medium text-green-900">Mejor Aprovechamiento</p>
                       <p className="text-sm text-green-700">{reportData.insights.bestBudget.name}</p>
                       <p className="text-xs text-green-600">{reportData.insights.bestBudget.category}</p>
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-green-900">{formatPercent(reportData.insights.bestBudget.efficiency)}</p>
-                      <p className="text-sm text-green-700">Eficiencia</p>
+                      <p className="text-sm text-green-700">Utilizado</p>
                     </div>
                   </div>
                 )}
 
-                {reportData.insights.worstBudget && (
+                {reportData.insights.worstBudget ? (
                   <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
                     <div>
-                      <p className="font-medium text-red-900">Mayor Sobregasto</p>
+                      <p className="font-medium text-red-900">Presupuesto Excedido</p>
                       <p className="text-sm text-red-700">{reportData.insights.worstBudget.name}</p>
                       <p className="text-xs text-red-600">{reportData.insights.worstBudget.category}</p>
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-red-900">{formatPercent(reportData.insights.worstBudget.overrun)}</p>
-                      <p className="text-sm text-red-700">Del límite</p>
+                      <p className="text-sm text-red-700">Sobregasto</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center p-3 bg-green-50 rounded-lg">
+                    <div className="text-center">
+                      <p className="font-medium text-green-900">¡Excelente Control!</p>
+                      <p className="text-sm text-green-700">Ningún presupuesto excedido</p>
                     </div>
                   </div>
                 )}
 
                 <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="font-medium text-gray-900 mb-2">Estadísticas Generales</p>
+                  <p className="font-medium text-gray-900 mb-2">Resumen General</p>
                   <div className="grid grid-cols-1 gap-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Velocidad promedio:</span>
-                      <span className="font-medium">{formatPercent(reportData.insights.avgSpendVelocity - 100)}</span>
+                      <span className="text-gray-600">Ritmo de gasto:</span>
+                      <span className={`font-medium ${
+                        reportData.insights.avgSpendVelocity - 100 > 10 ? 'text-red-600' : 
+                        reportData.insights.avgSpendVelocity - 100 > 0 ? 'text-yellow-600' : 'text-green-600'
+                      }`}>
+                        {formatPercent(reportData.insights.avgSpendVelocity - 100)}
+                      </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Oportunidad de ahorro:</span>
-                      <span className="font-medium text-green-600">{formatCurrency(reportData.insights.totalSavingOpportunity)}</span>
+                      <span className="text-gray-600">Potencial de ahorro:</span>
+                      <span className="font-medium text-green-600">
+                        {formatCurrency(reportData.insights.totalSavingOpportunity)}
+                      </span>
                     </div>
                   </div>
                 </div>
