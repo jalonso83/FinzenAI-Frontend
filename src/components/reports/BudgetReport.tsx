@@ -549,7 +549,6 @@ const BudgetReport: React.FC = () => {
                     <div>
                       <p className="font-medium text-green-900">Mejor Aprovechamiento</p>
                       <p className="text-sm text-green-700">{reportData.insights.bestBudget.name}</p>
-                      <p className="text-xs text-green-600">{reportData.insights.bestBudget.category}</p>
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-green-900">{formatPercent(reportData.insights.bestBudget.efficiency)}</p>
@@ -563,7 +562,6 @@ const BudgetReport: React.FC = () => {
                     <div>
                       <p className="font-medium text-red-900">Presupuesto Excedido</p>
                       <p className="text-sm text-red-700">{reportData.insights.worstBudget.name}</p>
-                      <p className="text-xs text-red-600">{reportData.insights.worstBudget.category}</p>
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-red-900">{formatPercent(reportData.insights.worstBudget.overrun)}</p>
