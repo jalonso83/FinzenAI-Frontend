@@ -547,7 +547,7 @@ const BudgetReport: React.FC = () => {
                 {reportData.insights.bestBudget && (
                   <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                     <div>
-                      <p className="font-medium text-green-900">Mejor Aprovechamiento</p>
+                      <p className="font-medium text-green-900">Control Balanceado</p>
                       <p className="text-sm text-green-700">{reportData.insights.bestBudget.name}</p>
                     </div>
                     <div className="text-right">
