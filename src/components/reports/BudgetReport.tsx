@@ -581,12 +581,17 @@ const BudgetReport: React.FC = () => {
                   <p className="font-medium text-gray-900 mb-2">Resumen General</p>
                   <div className="grid grid-cols-1 gap-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Ritmo de gasto:</span>
+                      <span className="text-gray-600">Control de gastos:</span>
                       <span className={`font-medium ${
                         reportData.insights.avgSpendVelocity - 100 > 10 ? 'text-red-600' : 
                         reportData.insights.avgSpendVelocity - 100 > 0 ? 'text-yellow-600' : 'text-green-600'
                       }`}>
-                        {formatPercent(reportData.insights.avgSpendVelocity - 100)}
+                        {reportData.insights.avgSpendVelocity - 100 > 10 ? 
+                          `+${(reportData.insights.avgSpendVelocity - 100).toFixed(1)}% por encima` :
+                          reportData.insights.avgSpendVelocity - 100 > 0 ?
+                            `+${(reportData.insights.avgSpendVelocity - 100).toFixed(1)}% del plan` :
+                            `${Math.abs(reportData.insights.avgSpendVelocity - 100).toFixed(1)}% bajo control`
+                        }
                       </span>
                     </div>
                     <div className="flex justify-between">
